@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "chat_statuses",
+  "info": {
+    "singularName": "chat-status",
+    "pluralName": "chat-statuses",
+    "displayName": "ChatStatus",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "isArchived": {
+      "type": "boolean",
+      "default": false
+    },
+    "isPinned": {
+      "type": "boolean",
+      "default": false
+    },
+    "unreadCount": {
+      "type": "integer",
+      "default": 0
+    },
+    "chat": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::chat.chat",
+      "inversedBy": "chatStatuses"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

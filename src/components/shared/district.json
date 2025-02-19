@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_shared_districts",
+  "info": {
+    "displayName": "District",
+    "icon": "pinMap"
+  },
+  "options": {},
+  "attributes": {
+    "provinceCode": {
+      "type": "string"
+    },
+    "provinceName": {
+      "type": "string"
+    },
+    "cityCode": {
+      "type": "string"
+    },
+    "cityName": {
+      "type": "string"
+    },
+    "districtCode": {
+      "type": "string"
+    },
+    "districtName": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "message_statuses",
+  "info": {
+    "singularName": "message-status",
+    "pluralName": "message-statuses",
+    "displayName": "MessageStatus"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "message": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::message.message",
+      "inversedBy": "messageStatuses"
+    }
+  }
+}

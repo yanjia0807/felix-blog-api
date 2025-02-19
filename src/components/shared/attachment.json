@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_shared_attachments",
+  "info": {
+    "displayName": "attachment",
+    "icon": "attachment"
+  },
+  "options": {},
+  "attributes": {
+    "files": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "image",
+        "video",
+        "audio",
+        "file"
+      ]
+    }
+  }
+}
