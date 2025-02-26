@@ -14,5 +14,13 @@ export default factories.createCoreController(
     async findPhotos(ctx) {
       return strapi.service("api::post.post").findPhotos(ctx);
     },
+
+    async findUserDraftPosts(ctx) {
+      return strapi.service("api::post.post").findUserDraftPosts(ctx);
+    },
+
+    async unpublish(ctx) {
+      return strapi.service("api::post.post").unpublish(ctx);
+    }
   })
 );
