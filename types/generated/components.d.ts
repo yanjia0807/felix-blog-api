@@ -31,6 +31,17 @@ export interface SharedDistrict extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedFileInfo extends Struct.ComponentSchema {
+  collectionName: 'components_shared_file_infos';
+  info: {
+    displayName: 'FileInfo';
+  };
+  attributes: {
+    file: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    fileInfo: Schema.Attribute.JSON;
+  };
+}
+
 export interface SharedPoi extends Struct.ComponentSchema {
   collectionName: 'components_shared_pois';
   info: {
@@ -57,6 +68,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'shared.attachment': SharedAttachment;
       'shared.district': SharedDistrict;
+      'shared.file-info': SharedFileInfo;
       'shared.poi': SharedPoi;
     }
   }

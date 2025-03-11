@@ -55,16 +55,16 @@
       "repeatable": false,
       "component": "shared.poi"
     },
-    "attachments": {
-      "type": "component",
-      "repeatable": true,
-      "component": "shared.attachment"
-    },
     "comments": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::comment.comment",
       "mappedBy": "post"
+    },
+    "files": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.file-info"
     }
   }
 }
