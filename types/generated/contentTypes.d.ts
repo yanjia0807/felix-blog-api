@@ -673,7 +673,6 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    attachments: Schema.Attribute.Component<'shared.attachment', true>;
     author: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
