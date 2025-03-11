@@ -65,6 +65,11 @@
       "type": "component",
       "repeatable": true,
       "component": "shared.file-info"
+    },
+    "attachments": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.attachment"
     }
   }
 }
