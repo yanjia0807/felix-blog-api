@@ -61,11 +61,6 @@
       "target": "api::comment.comment",
       "mappedBy": "post"
     },
-    "files": {
-      "type": "component",
-      "repeatable": true,
-      "component": "shared.file-info"
-    },
     "attachments": {
       "type": "media",
       "multiple": true,

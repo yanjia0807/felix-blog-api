@@ -692,7 +692,6 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     feature: Schema.Attribute.Relation<'oneToOne', 'api::feature.feature'>;
-    files: Schema.Attribute.Component<'shared.file-info', true>;
     likedByUsers: Schema.Attribute.Relation<
       'manyToMany',
       'plugin::users-permissions.user'

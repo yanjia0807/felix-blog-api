@@ -1,20 +1,5 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
-export interface SharedAttachment extends Struct.ComponentSchema {
-  collectionName: 'components_shared_attachments';
-  info: {
-    displayName: 'attachment';
-    icon: 'attachment';
-  };
-  attributes: {
-    files: Schema.Attribute.Media<
-      'images' | 'files' | 'videos' | 'audios',
-      true
-    >;
-    type: Schema.Attribute.Enumeration<['image', 'video', 'audio', 'file']>;
-  };
-}
-
 export interface SharedAttachmentExtra extends Struct.ComponentSchema {
   collectionName: 'components_shared_attachment_extras';
   info: {
@@ -45,17 +30,6 @@ export interface SharedDistrict extends Struct.ComponentSchema {
   };
 }
 
-export interface SharedFileInfo extends Struct.ComponentSchema {
-  collectionName: 'components_shared_file_infos';
-  info: {
-    displayName: 'FileInfo';
-  };
-  attributes: {
-    file: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
-    fileInfo: Schema.Attribute.JSON;
-  };
-}
-
 export interface SharedPoi extends Struct.ComponentSchema {
   collectionName: 'components_shared_pois';
   info: {
@@ -80,10 +54,8 @@ export interface SharedPoi extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
-      'shared.attachment': SharedAttachment;
       'shared.attachment-extra': SharedAttachmentExtra;
       'shared.district': SharedDistrict;
-      'shared.file-info': SharedFileInfo;
       'shared.poi': SharedPoi;
     }
   }
