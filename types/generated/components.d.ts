@@ -15,6 +15,20 @@ export interface SharedAttachment extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedAttachmentExtra extends Struct.ComponentSchema {
+  collectionName: 'components_shared_attachment_extras';
+  info: {
+    description: '';
+    displayName: 'AttachmentExtra';
+  };
+  attributes: {
+    attachment: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    thumbnail: Schema.Attribute.Media<'images'>;
+  };
+}
+
 export interface SharedDistrict extends Struct.ComponentSchema {
   collectionName: 'components_shared_districts';
   info: {
@@ -67,6 +81,7 @@ declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
       'shared.attachment': SharedAttachment;
+      'shared.attachment-extra': SharedAttachmentExtra;
       'shared.district': SharedDistrict;
       'shared.file-info': SharedFileInfo;
       'shared.poi': SharedPoi;

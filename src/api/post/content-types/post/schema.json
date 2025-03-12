@@ -65,6 +65,22 @@
       "type": "component",
       "repeatable": true,
       "component": "shared.file-info"
+    },
+    "attachments": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "attachmentExtras": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.attachment-extra"
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_shared_attachment_extras",
+  "info": {
+    "displayName": "AttachmentExtra",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "attachment": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "thumbnail": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}
