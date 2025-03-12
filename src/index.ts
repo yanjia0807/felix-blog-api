@@ -22,12 +22,12 @@ export default {
       return;
     }
     strapi.server.httpServer.on("listening", () => {
-      const io = new SocketServer(strapi.server.httpServer, {
-        cors: socketConfig.cors,
-      });
+      // const io = new SocketServer(strapi.server.httpServer, {
+      //   cors: socketConfig.cors,
+      // });
 
-      (strapi as any).io = io;
-      strapi.eventHub.emit("socket.ready");
+      // (strapi as any).io = io;
+      // strapi.eventHub.emit("socket.ready");
     });
   },
 
