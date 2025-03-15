@@ -69,72 +69,31 @@ export default factories.createCoreService("api::post.post", {
     const { userDocumentId, pagination } = ctx.query;
 
     const page = pagination?.page || 1;
-    const pageSize = pagination?.pageSize || 10;
+    const pageSize = pagination?.pageSize || 25;
     const offset = (page - 1) * pageSize;
     const limit = parseInt(pageSize, 10);
 
     const totalResult = await strapi.db.connection.raw(
-      `SELECT COUNT(*) as total
-        FROM (
-          SELECT t2.id
-          FROM files_related_mph t1
-          LEFT JOIN files t2 ON t1.file_id=t2.id
-          LEFT JOIN posts t3 ON t1.related_id=t3.id
-          LEFT JOIN posts_author_lnk t4 ON t3.id=t4.post_id
-					LEFT JOIN up_users t5 ON t4.user_id = t5.id
-          WHERE t1.related_type='api::post.post'
-          AND t1.field="cover"
-          AND t3.id IS NOT NULL
-          AND t5.document_id=?
-          UNION
-          SELECT t2.id
-          FROM files_related_mph t1
-          LEFT JOIN files t2 ON t1.file_id=t2.id
-          LEFT JOIN components_shared_attachments t3 ON t1.related_id=t3.id
-          LEFT JOIN posts_cmps t4 ON t3.id=t4.cmp_id
-          LEFT JOIN posts t5 ON t4.entity_id=t5.id
-          LEFT JOIN posts_author_lnk t6 ON t5.id=t6.post_id
-					LEFT JOIN up_users t7 ON t6.user_id = t7.id
-          WHERE t1.related_type='shared.attachment'
-          AND t3.type="image"
-          AND t5.id IS NOT NULL
-          AND t7.document_id=?) AS total`,
-      [userDocumentId, userDocumentId]
+      `SELECT COUNT(t1.id) AS total FROM files t1 INNER JOIN files_related_mph t2 ON t1.id=t2.file_id INNER JOIN posts t3 ON t2.related_type='api::post.post' AND t3.published_at IS NOT NULL AND t2.related_id=t3.id AND (t2.field='attachments' OR t2.field='cover') INNER JOIN posts_author_lnk t4 ON t3.id=t4.post_id INNER JOIN up_users t5 ON t4.user_id=t5.id WHERE t5.document_id=?`,
+      [userDocumentId]
     );
 
     const total = totalResult[0][0].total;
     const pageCount = Math.ceil(total / pageSize);
 
     const data = await strapi.db.connection.raw(
-      `SELECT t2.id,t2.document_id,t2.NAME,t2.alternative_text,t2.caption,t2.width,t2.height,t2.formats,t2.mime,t2.size,t2.url
-        FROM files_related_mph t1
-        LEFT JOIN files t2 ON t1.file_id=t2.id
-        LEFT JOIN posts t3 ON t1.related_id=t3.id
-        LEFT JOIN posts_author_lnk t4 ON t3.id=t4.post_id
-				LEFT JOIN up_users t5 ON t4.user_id = t5.id
-        WHERE t1.related_type='api::post.post'
-        AND t1.field="cover"
-        AND t3.id IS NOT NULL
-        AND t5.document_id=?
-        UNION
-        SELECT t2.id,t2.document_id,t2.NAME,t2.alternative_text,t2.caption,t2.width,t2.height,t2.formats,t2.mime,t2.size,t2.url
-        FROM files_related_mph t1
-        LEFT JOIN files t2 ON t1.file_id=t2.id
-        LEFT JOIN components_shared_attachments t3 ON t1.related_id=t3.id
-        LEFT JOIN posts_cmps t4 ON t3.id=t4.cmp_id
-        LEFT JOIN posts t5 ON t4.entity_id=t5.id
-        LEFT JOIN posts_author_lnk t6 ON t5.id=t6.post_id
-				LEFT JOIN up_users t7 ON t6.user_id = t7.id
-        WHERE t1.related_type='shared.attachment'
-        AND t3.type="image"
-        AND t5.id IS NOT NULL
-        AND t7.document_id=?
-        LIMIT ? OFFSET ?`,
-      [userDocumentId, userDocumentId, limit, offset]
+      `SELECT t1.document_id,t1.NAME,t1.alternative_text,t1.caption,t1.width,t1.height,t1.formats,t1.mime,t1.size,t1.url,t6.file_id AS 'attachmentExtras:attachment:id',t6.id AS 'attachmentExtras:thumbnail:id',t6.NAME AS 'attachmentExtras:thumbnail:name',t6.alternative_text AS 'attachmentExtras:thumbnail:alternative:text',t6.caption AS 'attachmentExtras:thumbnail:caption',t6.width AS 'attachmentExtras:thumbnail:width',t6.height AS 'attachmentExtras:thumbnail:height',t6.formats AS 'attachmentExtras:thumbnail:formats',t6.mime AS 'attachmentExtras:thumbnail:mime',t6.size AS 'attachmentExtras:thumbnail:size',t6.url AS 'attachmentExtras:thumbnail:url' FROM files t1 INNER JOIN files_related_mph t2 ON t1.id=t2.file_id INNER JOIN posts t3 ON t2.related_type='api::post.post' AND t3.published_at IS NOT NULL AND t2.related_id=t3.id AND (t2.field='attachments' OR t2.field='cover') INNER JOIN posts_author_lnk t4 ON t3.id=t4.post_id INNER JOIN up_users t5 ON t4.user_id=t5.id LEFT JOIN (
+        SELECT t1.id AS 'file_id',t2.*FROM (
+        SELECT t1.id,t2.related_id FROM files t1 INNER JOIN files_related_mph t2 ON t1.id=t2.file_id AND t2.related_type='shared.attachment-extra' AND t2.field='attachment') t1 LEFT JOIN (
+        SELECT t1.*,t2.related_id FROM files t1 INNER JOIN files_related_mph t2 ON t1.id=t2.file_id AND t2.related_type='shared.attachment-extra' AND t2.field='thumbnail') t2 ON t1.related_id=t2.related_id INNER JOIN posts_cmps t3 ON t3.component_type='shared.attachment-extra' AND t3.field='attachmentExtras' AND t3.cmp_id=t1.related_id INNER JOIN posts t4 ON t3.entity_id=t4.id AND t4.published_at IS NOT NULL) t6 ON t1.id=t6.file_id WHERE t5.document_id=? LIMIT ? OFFSET ?`,
+      [userDocumentId, limit, offset]
     );
 
+    const dataJson =
+      data && data[0] ? data[0].map((item: any) => transformItem(item)) : [];
+    console.log(dataJson)
     return {
-      data: (data && data[0]) || [],
+      data: dataJson,
       meta: {
         pagination: {
           page,
