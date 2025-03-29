@@ -518,6 +518,45 @@ export interface ApiFeatureFeature extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiFriendshipFriendship extends Struct.CollectionTypeSchema {
+  collectionName: 'friendships';
+  info: {
+    displayName: 'Friendship';
+    pluralName: 'friendships';
+    singularName: 'friendship';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::friendship.friendship'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    recipient: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+    requester: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+    state: Schema.Attribute.Enumeration<
+      ['requested', 'accepted', 'rejected', 'blocked']
+    > &
+      Schema.Attribute.DefaultTo<'requested'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiMessageStatusMessageStatus
   extends Struct.CollectionTypeSchema {
   collectionName: 'message_statuses';
@@ -610,6 +649,7 @@ export interface ApiNotificationNotification
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     data: Schema.Attribute.JSON;
+    feedback: Schema.Attribute.JSON;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -619,7 +659,9 @@ export interface ApiNotificationNotification
     publishedAt: Schema.Attribute.DateTime;
     state: Schema.Attribute.Enumeration<['read', 'unread']> &
       Schema.Attribute.DefaultTo<'unread'>;
-    type: Schema.Attribute.Enumeration<['following', 'system']>;
+    type: Schema.Attribute.Enumeration<
+      ['following', 'friendship', 'friendship-feedback', 'system']
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1271,6 +1313,7 @@ declare module '@strapi/strapi' {
       'api::chat.chat': ApiChatChat;
       'api::comment.comment': ApiCommentComment;
       'api::feature.feature': ApiFeatureFeature;
+      'api::friendship.friendship': ApiFriendshipFriendship;
       'api::message-status.message-status': ApiMessageStatusMessageStatus;
       'api::message.message': ApiMessageMessage;
       'api::notification.notification': ApiNotificationNotification;

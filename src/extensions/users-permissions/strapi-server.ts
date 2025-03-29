@@ -422,27 +422,24 @@ module.exports = (plugin: any) => {
       const schema = strapi.contentType(modelId);
       const { auth } = ctx.state;
       await validate.query(ctx.query, schema, { auth });
-
-      const sanitizedQueryParams = await sanitize.query(ctx.query, schema, {
-        auth,
-      });
+      const params: any = {
+        ..._.pick(ctx.request.body, ["following"]),
+      };
 
       const user: any = await strapi
         .documents("plugin::users-permissions.user")
         .findOne({
           documentId: ctx.state.user.documentId,
-          fields: [],
           populate: {
-            followings: {
-              fields: [],
-            },
-            avatar: true,
+            followings: true,
           },
         });
 
-      const params: any = {
-        ..._.pick(ctx.request.body, ["following"]),
-      };
+      const followingUser = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: params.following,
+        });
 
       const isFollowingBefore = _.some(user.followings, {
         documentId: params.following,
@@ -466,7 +463,21 @@ module.exports = (plugin: any) => {
         .update({
           documentId: ctx.state.user.documentId,
           data,
-          ...sanitizedQueryParams,
+          populate: {
+            avatar: {
+              fields: ["formats", "name", "alternativeText"],
+            },
+            district: true,
+            followers: {
+              count: true,
+            },
+            followings: {
+              count: true,
+            },
+            posts: {
+              count: true,
+            },
+          },
         });
 
       const sanitizeUserData: any = await sanitize.output(userData, schema, {
@@ -478,15 +489,13 @@ module.exports = (plugin: any) => {
         user: params.following,
         data: JSON.stringify({
           follower: {
-            id: user.id,
-            documentId: user.documentId,
-            username: user.username,
-            avatar: user.avatar && {
-              formats: {
-                thumbnail: user.avatar.formats.thumbnail,
-              },
-            },
-            bio: user.bio,
+            id: userData.id,
+            documentId: userData.documentId,
+            username: userData.username,
+            avatar: userData.avatar,
+            gender: userData.gender,
+            birthday: userData.birthday,
+            district: userData.district,
           },
           isFollowing,
         }),
@@ -498,7 +507,7 @@ module.exports = (plugin: any) => {
           data: notificationParams,
         });
 
-      (strapi as any).io.to(params.following).emit("notification:create", {
+      (strapi as any).io.to(followingUser.id).emit("notification:create", {
         data: notification,
       });
 

@@ -11,10 +11,10 @@
     "strapi": "strapi"
   },
   "dependencies": {
-    "@strapi/plugin-cloud": "5.11.1",
-    "@strapi/plugin-users-permissions": "5.11.1",
+    "@strapi/plugin-cloud": "5.12.1",
+    "@strapi/plugin-users-permissions": "5.12.1",
     "@strapi/provider-email-nodemailer": "^5.7.0",
-    "@strapi/strapi": "5.11.1",
+    "@strapi/strapi": "5.12.1",
     "mysql2": "3.9.8",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

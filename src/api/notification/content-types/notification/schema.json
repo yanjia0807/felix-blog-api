@@ -33,8 +33,13 @@
       "type": "enumeration",
       "enum": [
         "following",
+        "friendship",
+        "friendship-feedback",
         "system"
       ]
+    },
+    "feedback": {
+      "type": "json"
     }
   }
 }

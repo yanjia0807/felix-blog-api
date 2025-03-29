@@ -91,7 +91,6 @@ export default factories.createCoreService("api::post.post", {
 
     const dataJson =
       data && data[0] ? data[0].map((item: any) => transformItem(item)) : [];
-    console.log(dataJson)
     return {
       data: dataJson,
       meta: {

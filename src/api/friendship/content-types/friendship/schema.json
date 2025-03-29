@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "friendships",
+  "info": {
+    "singularName": "friendship",
+    "pluralName": "friendships",
+    "displayName": "Friendship"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "requester": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "recipient": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "state": {
+      "type": "enumeration",
+      "enum": [
+        "requested",
+        "accepted",
+        "rejected",
+        "blocked"
+      ],
+      "default": "requested"
+    }
+  }
+}
