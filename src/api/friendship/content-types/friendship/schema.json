@@ -4,18 +4,19 @@
   "info": {
     "singularName": "friendship",
     "pluralName": "friendships",
-    "displayName": "Friendship"
+    "displayName": "Friendship",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
   },
   "attributes": {
-    "requester": {
+    "sender": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "plugin::users-permissions.user"
     },
-    "recipient": {
+    "receiver": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "plugin::users-permissions.user"
@@ -26,7 +27,7 @@
         "requested",
         "accepted",
         "rejected",
-        "blocked"
+        "canceled"
       ],
       "default": "requested"
     }

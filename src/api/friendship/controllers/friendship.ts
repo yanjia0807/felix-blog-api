@@ -12,8 +12,8 @@ export default factories.createCoreController(
       const body: any = await this.sanitizeInput(ctx.request.body, ctx);
       const params = {
         data: {
-          requester: ctx.state.user.documentId,
-          recipient: body.data.recipient,
+          sender: ctx.state.user.documentId,
+          receiver: body.data.receiver,
         },
       };
 
@@ -25,22 +25,21 @@ export default factories.createCoreController(
       return sanitizedResult;
     },
 
-    async update(ctx) {
+    async cancel(ctx) {
       await this.validateQuery(ctx);
-      const query = await this.sanitizeQuery(ctx);
-      const params: any = await this.sanitizeInput(ctx.request.body, ctx);
-        console.log("@@", ctx.params)
+      const params = {
+        data: {
+          documentId : ctx.params.id,
+          user: ctx.state.user.documentId
+        }
+      }
+
       const result = await strapi
         .service("api::friendship.friendship")
-        .update(ctx.params.id, {
-            data: {
-                ...params.data,
-                notificationId: query.notificationId
-            }
-        });
+        .cancel(params);
 
       const sanitizedResult = await this.sanitizeOutput(result, ctx);
       return sanitizedResult;
-    },
+    }
   })
 );

@@ -35,6 +35,7 @@
         "following",
         "friendship",
         "friendship-feedback",
+        "friendship-cancel",
         "system"
       ]
     },

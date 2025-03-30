@@ -521,6 +521,7 @@ export interface ApiFeatureFeature extends Struct.CollectionTypeSchema {
 export interface ApiFriendshipFriendship extends Struct.CollectionTypeSchema {
   collectionName: 'friendships';
   info: {
+    description: '';
     displayName: 'Friendship';
     pluralName: 'friendships';
     singularName: 'friendship';
@@ -539,16 +540,16 @@ export interface ApiFriendshipFriendship extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
-    recipient: Schema.Attribute.Relation<
+    receiver: Schema.Attribute.Relation<
       'oneToOne',
       'plugin::users-permissions.user'
     >;
-    requester: Schema.Attribute.Relation<
+    sender: Schema.Attribute.Relation<
       'oneToOne',
       'plugin::users-permissions.user'
     >;
     state: Schema.Attribute.Enumeration<
-      ['requested', 'accepted', 'rejected', 'blocked']
+      ['requested', 'accepted', 'rejected', 'canceled']
     > &
       Schema.Attribute.DefaultTo<'requested'>;
     updatedAt: Schema.Attribute.DateTime;
@@ -660,7 +661,13 @@ export interface ApiNotificationNotification
     state: Schema.Attribute.Enumeration<['read', 'unread']> &
       Schema.Attribute.DefaultTo<'unread'>;
     type: Schema.Attribute.Enumeration<
-      ['following', 'friendship', 'friendship-feedback', 'system']
+      [
+        'following',
+        'friendship',
+        'friendship-feedback',
+        'friendship-cancel',
+        'system',
+      ]
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

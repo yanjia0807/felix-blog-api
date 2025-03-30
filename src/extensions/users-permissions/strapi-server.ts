@@ -1,9 +1,8 @@
-const { sanitize, validate } = strapi.contentAPI;
+import { sanitize, validate } from "@strapi/utils";
 import { yup, validateYupSchema, errors } from "@strapi/utils";
-
+import { Pagination } from "@strapi/utils/dist/pagination";
 import _ from "lodash";
 
-const modelId = "plugin::users-permissions.user";
 const { ApplicationError, ValidationError, ForbiddenError, NotFoundError } =
   errors;
 
@@ -359,13 +358,8 @@ module.exports = (plugin: any) => {
     },
 
     updateMe: async (ctx: any) => {
-      const schema = strapi.contentType(modelId);
-      const { auth } = ctx.state;
-      await validate.query(ctx.query, schema, { auth });
-
-      const sanitizedQueryParams = await sanitize.query(ctx.query, schema, {
-        auth,
-      });
+      const contentType = strapi.contentType("plugin::users-permissions.user");
+      const query = ctx.query;
 
       const data: any = {
         ..._.pick(ctx.request.body, [
@@ -379,26 +373,18 @@ module.exports = (plugin: any) => {
         ]),
       };
 
-      const userData = await strapi
-        .documents("plugin::users-permissions.user")
-        .update({
-          documentId: ctx.state.user.documentId,
-          data,
-          ...sanitizedQueryParams,
-        });
-
-      const sanitizeUserData: any = await sanitize.output(userData, schema, {
-        auth,
+      const result = await strapi.documents(contentType.uid).update({
+        documentId: ctx.state.user.documentId,
+        data,
+        ...query,
       });
-
-      const result = {
-        ...sanitizeUserData,
-      };
 
       return result;
     },
 
     isFollowingUser: async (ctx: any) => {
+      const query = ctx.query;
+
       const user: any = await strapi
         .documents("plugin::users-permissions.user")
         .findOne({
@@ -410,18 +396,15 @@ module.exports = (plugin: any) => {
             },
           },
         });
-      const isFollowing = _.some(user.followings, {
-        documentId: ctx.query.following,
+        
+      const result = _.some(user.followings, {
+        documentId: query.following,
       });
-      return {
-        data: isFollowing,
-      };
+      
+      return { data: result };
     },
 
     updateFollowings: async (ctx: any) => {
-      const schema = strapi.contentType(modelId);
-      const { auth } = ctx.state;
-      await validate.query(ctx.query, schema, { auth });
       const params: any = {
         ..._.pick(ctx.request.body, ["following"]),
       };
@@ -439,26 +422,27 @@ module.exports = (plugin: any) => {
         .documents("plugin::users-permissions.user")
         .findOne({
           documentId: params.following,
+          fields: [],
         });
 
-      const isFollowingBefore = _.some(user.followings, {
+      const isFollowed = _.some(user.followings, {
         documentId: params.following,
       });
 
-      const followings = isFollowingBefore
+      const followings = isFollowed
         ? _.filter(
             user.followings,
             (item: any) => item.documentId !== params.following
           )
         : _.concat(user.followings, params.following);
 
-      const isFollowing = !isFollowingBefore;
+      const isFollowing = !isFollowed;
 
       const data: any = {
         followings,
       };
 
-      const userData = await strapi
+      const result = await strapi
         .documents("plugin::users-permissions.user")
         .update({
           documentId: ctx.state.user.documentId,
@@ -480,22 +464,18 @@ module.exports = (plugin: any) => {
           },
         });
 
-      const sanitizeUserData: any = await sanitize.output(userData, schema, {
-        auth,
-      });
-
       const notificationParams = {
         type: "following" as any,
         user: params.following,
         data: JSON.stringify({
           follower: {
-            id: userData.id,
-            documentId: userData.documentId,
-            username: userData.username,
-            avatar: userData.avatar,
-            gender: userData.gender,
-            birthday: userData.birthday,
-            district: userData.district,
+            id: result.id,
+            documentId: result.documentId,
+            username: result.username,
+            avatar: result.avatar,
+            gender: result.gender,
+            birthday: result.birthday,
+            district: result.district,
           },
           isFollowing,
         }),
@@ -511,73 +491,55 @@ module.exports = (plugin: any) => {
         data: notification,
       });
 
-      const result = {
-        data: {
-          ...sanitizeUserData,
-        },
-      };
-
-      return result;
+      return data;
     },
 
     findUsers: async (ctx: any) => {
-      const schema = strapi.getModel(modelId);
-      const { auth } = ctx.state;
-      await validate.query(ctx.query, schema, { auth });
-
-      let sanitizedQueryParams = await sanitize.query(ctx.query, schema, {
-        auth,
-      });
-
-      sanitizedQueryParams = {
-        ...sanitizedQueryParams,
-        ...(sanitizedQueryParams.pagination as Record<string, unknown>),
+      const contentType = strapi.contentType("plugin::users-permissions.user");
+      const query: any = ctx.query;
+      const { filters, pagination: queryPagination } = query;
+      const page = queryPagination?.page || 1;
+      const pageSize = queryPagination?.pageSize || 25;
+      const pagination: Pagination = {
+        start: (page - 1) * pageSize,
+        limit: pageSize,
       };
 
-      const { results, pagination } = await strapi.entityService.findPage(
-        modelId,
-        sanitizedQueryParams
-      );
+      const [data, total]: any = await Promise.all([
+        strapi.documents(contentType.uid).findMany({...query, pagination}),
+        strapi.documents(contentType.uid).count({ filters }),
+      ]);
 
-      const users = await Promise.all(
-        results.map((user) => sanitize.output(user, schema, { auth }))
-      );
+      const pageCount = Math.ceil(total / pageSize);
 
       ctx.body = {
-        data: users,
+        data,
         meta: {
-          pagination: pagination,
+          pagination: {
+            page,
+            pageSize,
+            pageCount,
+            total,
+          }
         },
       };
     },
 
     findUser: async (ctx: any) => {
-      const schema = strapi.contentType(modelId);
-      const { auth } = ctx.state;
+      const contentType = strapi.contentType("plugin::users-permissions.user");
       const { documentId } = ctx.params;
-      await validate.query(ctx.query, schema, { auth });
+      const query = ctx.query;
 
-      const sanitizedQueryParams = await sanitize.query(ctx.query, schema, {
-        auth,
-      });
-
-      const userData = await strapi.documents(schema.uid).findOne({
+      const data = await strapi.documents(contentType.uid).findOne({
         documentId,
-        ...sanitizedQueryParams,
+        ...query,
       });
 
-      const sanitizeUserData: any = await sanitize.output(userData, schema, {
-        auth,
-      });
-
-      const result = {
-        ...sanitizeUserData,
-      };
-
-      return result;
+      return data;
     },
 
     findFollowings: async (ctx: any) => {
+      const contentType = strapi.contentType("plugin::users-permissions.user");
       const {
         filters: { keyword, documentId },
         populate,
@@ -623,7 +585,7 @@ module.exports = (plugin: any) => {
       }
 
       const [data, total]: any = await Promise.all([
-        strapi.documents(modelId).findMany({
+        strapi.documents(contentType.uid).findMany({
           pagination: {
             start,
             limit,
@@ -631,9 +593,8 @@ module.exports = (plugin: any) => {
           populate,
           filters,
         }),
-        strapi.documents(modelId).count({ filters }),
+        strapi.documents(contentType.uid).count({ filters }),
       ]);
-
       const pageCount = Math.ceil(total / pageSize);
 
       return {
@@ -650,6 +611,7 @@ module.exports = (plugin: any) => {
     },
 
     findFollowers: async (ctx: any) => {
+      const contentType = strapi.contentType("plugin::users-permissions.user");
       const {
         filters: { keyword, documentId },
         populate,
@@ -678,7 +640,6 @@ module.exports = (plugin: any) => {
           $in: _.map(user.followers, (item: any) => item.documentId),
         },
       };
-
       if (keyword) {
         filters["$or"] = [
           {
@@ -695,7 +656,7 @@ module.exports = (plugin: any) => {
       }
 
       const [data, total]: any = await Promise.all([
-        strapi.documents(modelId).findMany({
+        strapi.documents(contentType.uid).findMany({
           pagination: {
             start,
             limit,
@@ -703,9 +664,8 @@ module.exports = (plugin: any) => {
           populate,
           filters,
         }),
-        strapi.documents(modelId).count({ filters }),
+        strapi.documents(contentType.uid).count({ filters }),
       ]);
-
       const pageCount = Math.ceil(total / pageSize);
 
       return {
