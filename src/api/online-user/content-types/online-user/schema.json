@@ -1,0 +1,20 @@
+{
+  "kind": "collectionType",
+  "collectionName": "online_users",
+  "info": {
+    "singularName": "online-user",
+    "pluralName": "online-users",
+    "displayName": "OnlineUser",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

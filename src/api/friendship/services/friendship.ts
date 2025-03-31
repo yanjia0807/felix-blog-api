@@ -141,4 +141,35 @@ export default factories.createCoreService("api::friendship.friendship", {
 
     return result;
   },
+
+  async findFriendsOfUser(user: any) {
+    const friendships = await strapi
+      .documents("api::friendship.friendship")
+      .findMany({
+        filters: {
+          $and: [
+            { state: "accepted" },
+            {
+              $or: [{ sender: user }, { receiver: user }],
+            },
+          ],
+        },
+        populate: {
+          sender: {
+            fields: [],
+          },
+          receiver: {
+            fields: [],
+          },
+        },
+      });
+
+    const friends = _.uniq(
+      _.map(friendships, (item: any) =>
+        item.sender.id === user ? item.receiver.id : item.sender.id
+      )
+    );
+
+    return friends;
+  },
 });

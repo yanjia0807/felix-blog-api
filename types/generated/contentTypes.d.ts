@@ -679,6 +679,38 @@ export interface ApiNotificationNotification
   };
 }
 
+export interface ApiOnlineUserOnlineUser extends Struct.CollectionTypeSchema {
+  collectionName: 'online_users';
+  info: {
+    description: '';
+    displayName: 'OnlineUser';
+    pluralName: 'online-users';
+    singularName: 'online-user';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::online-user.online-user'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiOtpOtp extends Struct.CollectionTypeSchema {
   collectionName: 'otps';
   info: {
@@ -1324,6 +1356,7 @@ declare module '@strapi/strapi' {
       'api::message-status.message-status': ApiMessageStatusMessageStatus;
       'api::message.message': ApiMessageMessage;
       'api::notification.notification': ApiNotificationNotification;
+      'api::online-user.online-user': ApiOnlineUserOnlineUser;
       'api::otp.otp': ApiOtpOtp;
       'api::post.post': ApiPostPost;
       'api::tag.tag': ApiTagTag;

@@ -17,10 +17,12 @@ export default {
    */
   register({ strapi }: { strapi: Core.Strapi }) {
     const socketConfig = strapi.config.get("socket.config") as SocketConfig;
+
     if (!socketConfig) {
       strapi.log.error("Invalid Socket.IO configuration");
       return;
     }
+    
     strapi.server.httpServer.on("listening", () => {
       const io = new SocketServer(strapi.server.httpServer, {
         cors: socketConfig.cors,
