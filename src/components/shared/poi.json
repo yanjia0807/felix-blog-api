@@ -2,14 +2,12 @@
   "collectionName": "components_shared_pois",
   "info": {
     "displayName": "Poi",
-    "icon": "pinMap"
+    "icon": "pinMap",
+    "description": ""
   },
   "options": {},
   "attributes": {
     "name": {
-      "type": "string"
-    },
-    "location": {
       "type": "string"
     },
     "type": {
@@ -37,6 +35,12 @@
       "type": "string"
     },
     "citycode": {
+      "type": "string"
+    },
+    "longitude": {
+      "type": "string"
+    },
+    "latitude": {
       "type": "string"
     }
   }

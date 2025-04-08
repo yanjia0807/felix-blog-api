@@ -7,8 +7,8 @@ export default {
     },
     {
       method: "PUT",
-      path: "/notifications/:id/friendship",
-      handler: "api::notification.notification.updateFriendshipNotification",
+      path: "/notifications/:id/friend-request",
+      handler: "api::notification.notification.updateFriendRequestNotification",
     }
   ],
 };

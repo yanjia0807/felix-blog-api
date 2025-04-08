@@ -3,43 +3,114 @@
  */
 
 import { factories } from "@strapi/strapi";
-import _ from "lodash";
+import _, { orderBy } from "lodash";
 
 export default factories.createCoreService(
   "api::online-user.online-user",
   ({ strapi }) => ({
-    async createOnlineUser(socket) {
-      const result = await super.create({
+    async createOnlineUser(userId) {
+      const onlineUser = await super.create({
         data: {
           user: {
-            id: socket.userId,
+            id: userId,
+          },
+        },
+        populate: {
+          user: {
+            fields: [],
           },
         },
       });
 
-      const friends = await strapi
-        .service("api::friendship.friendship")
-        .findFriendsOfUser(socket.userId);
+      const user: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: onlineUser.user.documentId,
+          fields: ["username"],
+          populate: {
+            avatar: true,
+            friends: {
+              fields: [],
+            },
+          },
+        });
 
-      _.forEach(friends, (item: any) =>
-        (strapi as any).io.to(item).emit("user:online", socket.userId)
+      _.forEach(
+        _.map(user.friends, (item: any) => item.id),
+        (item: any) =>
+          (strapi as any).io.to(item).emit("user:online", {
+            data: _.pick(user, ["id", "documentId"]),
+          })
+      );
+
+      return onlineUser;
+    },
+
+    async deleteOnlineUser(onlineUser) {
+      const userDocumentId = onlineUser.user.documentId;
+      const result = await super.delete(onlineUser.documentId);
+
+      const user: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: userDocumentId,
+          fields: [],
+          populate: {
+            friends: {
+              fields: [],
+            },
+          },
+        });
+
+      _.forEach(
+        _.map(user.friends, (item: any) => item.id),
+        (item: any) =>
+          (strapi as any).io.to(item).emit("user:offline", {
+            data: _.pick(user, ["id", "documentId"]),
+          })
       );
 
       return result;
     },
 
-    async removeOnlineUser(onlineUser, socket) {
-      const result = await super.delete(onlineUser);
+    async findOnlineFriends(params) {
+      const user: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: params.data.userDocumentId,
+          fields: [],
+          populate: {
+            friends: {
+              fields: [],
+            },
+          },
+        });
 
-      const friends = await strapi
-        .service("api::friendship.friendship")
-        .findFriendsOfUser(socket.userId);
+      const queryParams = {
+        filters: {
+          user: {
+            documentId: {
+              $in: _.map(user.friends, (item: any) => item.documentId),
+            },
+          },
+        },
+        populate: {
+          user: {
+            fields: ["username"],
+            populate: ["avatar"],
+          },
+        },
+        pagination: params.pagination,
+      };
 
-      _.forEach(friends, (item: any) =>
-        (strapi as any).io.to(item).emit("user:offline", socket.userId)
-      );
+      const { results, pagination } = await super.find(queryParams);
 
-      return result;
+      return {
+        data: results,
+        meta: {
+          pagination,
+        },
+      };
     },
   })
 );

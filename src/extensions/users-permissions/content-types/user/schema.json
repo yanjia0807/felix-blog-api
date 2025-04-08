@@ -135,6 +135,11 @@
       "relation": "oneToMany",
       "target": "api::comment.comment",
       "mappedBy": "user"
+    },
+    "friends": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user"
     }
   }
 }

@@ -1,11 +1,10 @@
 {
   "kind": "collectionType",
-  "collectionName": "friendships",
+  "collectionName": "friend_requests",
   "info": {
-    "singularName": "friendship",
-    "pluralName": "friendships",
-    "displayName": "Friendship",
-    "description": ""
+    "singularName": "friend-request",
+    "pluralName": "friend-requests",
+    "displayName": "FriendRequest"
   },
   "options": {
     "draftAndPublish": false
@@ -26,10 +25,8 @@
       "enum": [
         "requested",
         "accepted",
-        "rejected",
-        "canceled"
-      ],
-      "default": "requested"
+        "rejected"
+      ]
     }
   }
 }

@@ -3,6 +3,7 @@
  */
 
 import { factories } from "@strapi/strapi";
+import _ from "lodash";
 
 export default factories.createCoreService("api::notification.notification", {
   async count(params) {
@@ -22,7 +23,7 @@ export default factories.createCoreService("api::notification.notification", {
     return { data: count };
   },
 
-  async updateFriendshipNotification(documentId, params) {
+  async updateFriendRequestNotification(documentId, params) {
     const notification = await super.update(documentId, {
       data: {
         state: "read",
@@ -30,10 +31,10 @@ export default factories.createCoreService("api::notification.notification", {
       },
     });
 
-    const friendship = await strapi
-      .documents("api::friendship.friendship")
+    const friendRequest = await strapi
+      .documents("api::friend-request.friend-request")
       .update({
-        documentId: params.data.friendship,
+        documentId: notification.data.friendRequest.documentId,
         data: {
           state: params.data.state,
         },
@@ -41,33 +42,79 @@ export default factories.createCoreService("api::notification.notification", {
           receiver: {
             populate: {
               avatar: true,
+              district: true,
+              friends: {
+                fields: [],
+              },
             },
           },
-          sender: true,
+          sender: {
+            populate: {
+              friends: {
+                fields: [],
+              },
+            },
+          },
         },
       });
 
+    if (friendRequest.state === "accepted") {
+      await strapi.documents("plugin::users-permissions.user").update({
+        documentId: friendRequest.sender.documentId,
+        data: {
+          friends: _.concat(
+            _.map(friendRequest.sender.friends, (item: any) => item.id),
+            friendRequest.receiver.id
+          ),
+        },
+      });
+
+      await strapi.documents("plugin::users-permissions.user").update({
+        documentId: friendRequest.receiver.documentId,
+        data: {
+          friends: _.concat(
+            _.map(friendRequest.receiver.friends, (item: any) => item.id),
+            friendRequest.sender.id
+          ),
+        },
+      });
+
+      (strapi as any).io.to(friendRequest.sender.id).emit("friend:add", {
+        data: {
+          id: friendRequest.receiver.id,
+          documentId: friendRequest.receiver.documentId,
+        },
+      });
+    }
+
     const notification1 = await super.create({
       data: {
-        type: "friendship-feedback" as any,
-        user: friendship.sender.id,
+        type: "friend-feedback" as any,
+        user: friendRequest.sender.id,
         data: JSON.stringify({
-          documentId: friendship.documentId,
-          receiver: {
-            id: friendship.receiver.id,
-            documentId: friendship.receiver.documentId,
-            username: friendship.receiver.username,
-            avatar: friendship.receiver.avatar,
-            gender: friendship.receiver.gender,
-            birthday: friendship.receiver.birthday,
-            district: friendship.receiver.district,
+          friendRequest: {
+            id: friendRequest.id,
+            documentId: friendRequest.documentId,
+            receiver: {
+              id: friendRequest.receiver.id,
+              documentId: friendRequest.receiver.documentId,
+              username: friendRequest.receiver.username,
+              avatar: friendRequest.receiver.avatar,
+              gender: friendRequest.receiver.gender,
+              birthday: friendRequest.receiver.birthday,
+              district: friendRequest.receiver.district,
+            },
+            sender: {
+              id: friendRequest.sender.id,
+              documentId: friendRequest.documentId,
+            },
+            state: friendRequest.state,
           },
-          state: friendship.state,
         }),
       },
     });
 
-    (strapi as any).io.to(friendship.sender.id).emit("notification:create", {
+    (strapi as any).io.to(friendRequest.sender.id).emit("notification:create", {
       data: notification1,
     });
 

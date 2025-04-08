@@ -24,16 +24,17 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       });
 
       io.on("connection", async (socket: any) => {
-        strapi.log.info(`client [${socket.id}, ${socket.userId}] connected`);
-
+        const socketId = socket.id;
+        const userId = socket.userId;
+        strapi.log.info(`client [${socketId}, ${userId}] connected`);
         socket.join(socket.userId);
         socket.emit("session", {
-          userId: socket.userId,
+          userId,
         });
 
         const onlineUser = await strapi
           .service("api::online-user.online-user")
-          .createOnlineUser(socket);
+          .createOnlineUser(userId);
 
         socket.on("disconnect", async () => {
           strapi.log.info(
@@ -42,7 +43,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
           await strapi
             .service("api::online-user.online-user")
-            .removeOnlineUser(onlineUser.documentId, socket);
+            .deleteOnlineUser(onlineUser);
         });
       });
     });

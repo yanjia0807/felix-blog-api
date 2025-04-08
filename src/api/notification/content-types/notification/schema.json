@@ -33,9 +33,9 @@
       "type": "enumeration",
       "enum": [
         "following",
-        "friendship",
-        "friendship-feedback",
-        "friendship-cancel",
+        "friend-request",
+        "friend-feedback",
+        "friend-cancel",
         "system"
       ]
     },

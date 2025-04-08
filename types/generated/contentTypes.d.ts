@@ -369,6 +369,43 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiBannerBanner extends Struct.CollectionTypeSchema {
+  collectionName: 'banners';
+  info: {
+    description: '';
+    displayName: 'Banner';
+    pluralName: 'banners';
+    singularName: 'banner';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    author: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    image: Schema.Attribute.Media<'images' | 'videos'>;
+    isActive: Schema.Attribute.Boolean;
+    link: Schema.Attribute.Component<'shared.link', false>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::banner.banner'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Integer;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiChatStatusChatStatus extends Struct.CollectionTypeSchema {
   collectionName: 'chat_statuses';
   info: {
@@ -518,13 +555,13 @@ export interface ApiFeatureFeature extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface ApiFriendshipFriendship extends Struct.CollectionTypeSchema {
-  collectionName: 'friendships';
+export interface ApiFriendRequestFriendRequest
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'friend_requests';
   info: {
-    description: '';
-    displayName: 'Friendship';
-    pluralName: 'friendships';
-    singularName: 'friendship';
+    displayName: 'FriendRequest';
+    pluralName: 'friend-requests';
+    singularName: 'friend-request';
   };
   options: {
     draftAndPublish: false;
@@ -536,7 +573,7 @@ export interface ApiFriendshipFriendship extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
-      'api::friendship.friendship'
+      'api::friend-request.friend-request'
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
@@ -548,10 +585,7 @@ export interface ApiFriendshipFriendship extends Struct.CollectionTypeSchema {
       'oneToOne',
       'plugin::users-permissions.user'
     >;
-    state: Schema.Attribute.Enumeration<
-      ['requested', 'accepted', 'rejected', 'canceled']
-    > &
-      Schema.Attribute.DefaultTo<'requested'>;
+    state: Schema.Attribute.Enumeration<['requested', 'accepted', 'rejected']>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -663,9 +697,9 @@ export interface ApiNotificationNotification
     type: Schema.Attribute.Enumeration<
       [
         'following',
-        'friendship',
-        'friendship-feedback',
-        'friendship-cancel',
+        'friend-request',
+        'friend-feedback',
+        'friend-cancel',
         'system',
       ]
     >;
@@ -1300,6 +1334,10 @@ export interface PluginUsersPermissionsUser
       'manyToMany',
       'plugin::users-permissions.user'
     >;
+    friends: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::users-permissions.user'
+    >;
     gender: Schema.Attribute.Enumeration<['male', 'female']>;
     likePosts: Schema.Attribute.Relation<'manyToMany', 'api::post.post'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1348,11 +1386,12 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::banner.banner': ApiBannerBanner;
       'api::chat-status.chat-status': ApiChatStatusChatStatus;
       'api::chat.chat': ApiChatChat;
       'api::comment.comment': ApiCommentComment;
       'api::feature.feature': ApiFeatureFeature;
-      'api::friendship.friendship': ApiFriendshipFriendship;
+      'api::friend-request.friend-request': ApiFriendRequestFriendRequest;
       'api::message-status.message-status': ApiMessageStatusMessageStatus;
       'api::message.message': ApiMessageMessage;
       'api::notification.notification': ApiNotificationNotification;

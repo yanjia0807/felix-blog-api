@@ -30,9 +30,21 @@ export interface SharedDistrict extends Struct.ComponentSchema {
   };
 }
 
+export interface SharedLink extends Struct.ComponentSchema {
+  collectionName: 'components_shared_links';
+  info: {
+    displayName: 'Link';
+  };
+  attributes: {
+    isExternal: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    src: Schema.Attribute.String;
+  };
+}
+
 export interface SharedPoi extends Struct.ComponentSchema {
   collectionName: 'components_shared_pois';
   info: {
+    description: '';
     displayName: 'Poi';
     icon: 'pinMap';
   };
@@ -42,7 +54,8 @@ export interface SharedPoi extends Struct.ComponentSchema {
     adname: Schema.Attribute.String;
     citycode: Schema.Attribute.String;
     cityname: Schema.Attribute.String;
-    location: Schema.Attribute.String;
+    latitude: Schema.Attribute.String;
+    longitude: Schema.Attribute.String;
     name: Schema.Attribute.String;
     pcode: Schema.Attribute.String;
     pname: Schema.Attribute.String;
@@ -56,6 +69,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'shared.attachment-extra': SharedAttachmentExtra;
       'shared.district': SharedDistrict;
+      'shared.link': SharedLink;
       'shared.poi': SharedPoi;
     }
   }
