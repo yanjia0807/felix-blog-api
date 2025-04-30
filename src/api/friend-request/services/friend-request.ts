@@ -11,13 +11,13 @@ export default factories.createCoreService(
   {
     async create(params: any) {
       const {
-        data: { senderDocumentId, receiverDocumentId },
+        data: { sender, receiver },
       } = params;
 
       const user: any = await strapi
         .documents("plugin::users-permissions.user")
         .findOne({
-          documentId: senderDocumentId,
+          documentId: sender,
           fields: [],
           populate: {
             friends: {
@@ -27,7 +27,7 @@ export default factories.createCoreService(
         });
 
       const isFriend = _.some(user.friends, {
-        documentId: receiverDocumentId,
+        documentId: receiver,
       });
 
       if (isFriend) {
@@ -36,8 +36,8 @@ export default factories.createCoreService(
 
       const friendRequest = await super.create({
         data: {
-          sender: senderDocumentId,
-          receiver: receiverDocumentId,
+          sender,
+          receiver,
         },
         populate: {
           sender: {

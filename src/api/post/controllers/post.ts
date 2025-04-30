@@ -19,8 +19,20 @@ export default factories.createCoreController(
       return strapi.service("api::post.post").findUserDraftPosts(ctx);
     },
 
+    async findTrendingPosts(ctx) {
+      return strapi.service("api::post.post").findTrendingPosts(ctx);
+    },
+
+    async findFollowingPosts(ctx) {
+      return strapi.service("api::post.post").findFollowingPosts(ctx);
+    },
+
+    async findDiscoverPosts(ctx) {
+      return strapi.service("api::post.post").findDiscoverPosts(ctx);
+    },
+
     async unpublish(ctx) {
       return strapi.service("api::post.post").unpublish(ctx);
-    }
+    },
   })
 );

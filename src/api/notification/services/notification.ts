@@ -24,10 +24,12 @@ export default factories.createCoreService("api::notification.notification", {
   },
 
   async updateFriendRequestNotification(documentId, params) {
+    const {data} = params;
+
     const notification = await super.update(documentId, {
       data: {
         state: "read",
-        feedback: JSON.stringify({ state: params.data.state }),
+        feedback: JSON.stringify({ state: data.state }),
       },
     });
 
@@ -36,7 +38,7 @@ export default factories.createCoreService("api::notification.notification", {
       .update({
         documentId: notification.data.friendRequest.documentId,
         data: {
-          state: params.data.state,
+          state: data.state,
         },
         populate: {
           receiver: {
@@ -66,6 +68,10 @@ export default factories.createCoreService("api::notification.notification", {
             _.map(friendRequest.sender.friends, (item: any) => item.id),
             friendRequest.receiver.id
           ),
+          followings: _.concat(
+            _.map(friendRequest.sender.followers, (item: any) => item.id),
+            friendRequest.receiver.id
+          ),
         },
       });
 
@@ -76,13 +82,19 @@ export default factories.createCoreService("api::notification.notification", {
             _.map(friendRequest.receiver.friends, (item: any) => item.id),
             friendRequest.sender.id
           ),
+          followings: _.concat(
+            _.map(friendRequest.receiver.followers, (item: any) => item.id),
+            friendRequest.sender.id
+          ),
         },
       });
 
       (strapi as any).io.to(friendRequest.sender.id).emit("friend:add", {
         data: {
-          id: friendRequest.receiver.id,
-          documentId: friendRequest.receiver.documentId,
+          friend: {
+            id: friendRequest.receiver.id,
+            documentId: friendRequest.receiver.documentId,
+          }
         },
       });
     }

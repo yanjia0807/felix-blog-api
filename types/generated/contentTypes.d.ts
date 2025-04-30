@@ -802,7 +802,7 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
     >;
     comments: Schema.Attribute.Relation<'oneToMany', 'api::comment.comment'>;
     content: Schema.Attribute.Text;
-    cover: Schema.Attribute.Media<'images'>;
+    cover: Schema.Attribute.Media<'images' | 'videos'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -836,6 +836,8 @@ export interface ApiTagTag extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    asCover: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    bgColor: Schema.Attribute.String;
     code: Schema.Attribute.UID<'name'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

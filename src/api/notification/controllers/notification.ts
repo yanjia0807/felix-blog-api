@@ -22,8 +22,9 @@ export default factories.createCoreController(
     },
 
     async updateFriendRequestNotification(ctx) {
-      const params: any = await this.sanitizeInput(ctx.request.body, ctx);
-
+      const params = {
+        data: ctx.request.body.data,
+      };
       const result = await strapi
         .service("api::notification.notification")
         .updateFriendRequestNotification(ctx.params.id, params);

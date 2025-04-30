@@ -522,6 +522,16 @@ module.exports = (plugin: any) => {
         data: notification,
       });
 
+      (strapi as any).io.to(followingUser.id).emit("following:update", {
+        data: {
+          follower: {
+            id: ctx.state.user.id,
+            documentId: ctx.state.user.documentId,
+          },
+          isFollowed: !isFollowed,
+        },
+      });
+
       return data;
     },
 
@@ -572,7 +582,7 @@ module.exports = (plugin: any) => {
     findFollowings: async (ctx: any) => {
       const contentType = strapi.contentType("plugin::users-permissions.user");
       const {
-        filters: { keyword, userDocumentId },
+        filters: { keywords, userDocumentId },
         populate,
         pagination,
       } = ctx.query;
@@ -600,16 +610,16 @@ module.exports = (plugin: any) => {
         },
       };
 
-      if (keyword) {
+      if (keywords) {
         filters["$or"] = [
           {
             username: {
-              $containsi: keyword,
+              $containsi: keywords,
             },
           },
           {
             email: {
-              $containsi: keyword,
+              $containsi: keywords,
             },
           },
         ];
@@ -644,7 +654,7 @@ module.exports = (plugin: any) => {
     findFollowers: async (ctx: any) => {
       const contentType = strapi.contentType("plugin::users-permissions.user");
       const {
-        filters: { keyword, userDocumentId },
+        filters: { keywords, userDocumentId },
         populate,
         pagination,
       } = ctx.query;
@@ -671,16 +681,16 @@ module.exports = (plugin: any) => {
           $in: _.map(user.followers, (item: any) => item.documentId),
         },
       };
-      if (keyword) {
+      if (keywords) {
         filters["$or"] = [
           {
             username: {
-              $containsi: keyword,
+              $containsi: keywords,
             },
           },
           {
             email: {
-              $containsi: keyword,
+              $containsi: keywords,
             },
           },
         ];
@@ -713,34 +723,65 @@ module.exports = (plugin: any) => {
     },
 
     findFriends: async (ctx: any) => {
-      const pagination = ctx.query.pagination;
-      const userId = ctx.state.user.id;
+      const contentType = strapi.contentType("plugin::users-permissions.user");
+      const {
+        filters: { keywords, userDocumentId },
+        populate,
+        pagination,
+      } = ctx.query;
 
-      const page = pagination?.page ? parseInt(pagination?.page) : 1;
-      const pageSize = pagination?.pageSize
-        ? parseInt(pagination?.pageSize)
-        : 20;
-      const offset = (page - 1) * pageSize;
+      const page = pagination?.page || 1;
+      const pageSize = pagination?.pageSize || 20;
+      const start = (page - 1) * pageSize;
       const limit = pageSize;
 
-      const totalResult = await strapi.db.connection.raw(
-        `SELECT COUNT(*) FROM up_users_friends_lnk t1 LEFT JOIN up_users t2 ON t1.inv_user_id=t2.id WHERE t1.user_id=?`,
-        [userId]
-      );
+      const user: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: userDocumentId,
+          fields: [],
+          populate: {
+            friends: {
+              fields: [],
+            },
+          },
+        });
 
-      const data = await strapi.db.connection.raw(
-        `SELECT t2.id,t2.document_id,t2.username,t3.id AS 'avatar:id',t3.document_id AS 'avatar:document_id',t3.alternative_text AS 'avatar:alternative_text',t3.width AS 'avatar:width',t3.height AS 'avatar:height',t3.formats AS 'avatar:formats',CASE WHEN t4.id IS NULL THEN 0 ELSE 1 END AS 'is_online' FROM up_users_friends_lnk t1 LEFT JOIN up_users t2 ON t1.inv_user_id=t2.id LEFT JOIN (
-SELECT sub1.id,sub1.document_id,sub1.alternative_text,sub1.width,sub1.height,sub1.formats,sub2.related_id FROM files sub1 INNER JOIN files_related_mph sub2 ON sub1.id=sub2.file_id WHERE sub2.related_type='plugin::users-permissions.user' AND sub2.field="avatar") t3 ON t3.related_id=t2.id LEFT JOIN online_users_user_lnk t4 ON t2.id=t4.user_id WHERE t1.user_id=? LIMIT ? OFFSET ?`,
-        [userId, limit, offset]
-      );
+      const filters: any = {
+        documentId: {
+          $in: _.map(user.friends, (item: any) => item.documentId),
+        },
+      };
+      if (keywords) {
+        filters["$or"] = [
+          {
+            username: {
+              $containsi: keywords,
+            },
+          },
+          {
+            email: {
+              $containsi: keywords,
+            },
+          },
+        ];
+      }
 
-      const total = parseInt(totalResult[0][0].total);
+      const [data, total]: any = await Promise.all([
+        strapi.documents(contentType.uid).findMany({
+          pagination: {
+            start,
+            limit,
+          },
+          populate,
+          filters,
+        }),
+        strapi.documents(contentType.uid).count({ filters }),
+      ]);
       const pageCount = Math.ceil(total / pageSize);
-      const dataJson =
-        data && data[0] ? data[0].map((item: any) => transformItem(item)) : [];
 
       return {
-        data: dataJson,
+        data,
         meta: {
           pagination: {
             page,
@@ -773,13 +814,13 @@ SELECT sub1.id,sub1.document_id,sub1.alternative_text,sub1.width,sub1.height,sub
     },
 
     cancelFriend: async (ctx: any) => {
-      const friendUserDocumentId = ctx.request.body.data.userDocumentId;
-      const currentUserDocumentId = ctx.state.user.documentId;
+      const friendDocumentId = ctx.request.body.data.friend;
+      const userDocumentId = ctx.state.user.documentId;
 
       let currentUser: any = await strapi
         .documents("plugin::users-permissions.user")
         .findOne({
-          documentId: currentUserDocumentId,
+          documentId: userDocumentId,
           fields: [],
           populate: {
             friends: {
@@ -791,11 +832,15 @@ SELECT sub1.id,sub1.document_id,sub1.alternative_text,sub1.width,sub1.height,sub
       currentUser = await strapi
         .documents("plugin::users-permissions.user")
         .update({
-          documentId: currentUserDocumentId,
+          documentId: userDocumentId,
           data: {
             friends: _.filter(
               currentUser.friends,
-              (item: any) => item.documentId !== friendUserDocumentId
+              (item: any) => item.documentId !== friendDocumentId
+            ),
+            followings: _.filter(
+              currentUser.followings,
+              (item: any) => item.documentId !== friendDocumentId
             ),
           },
           populate: {
@@ -804,10 +849,10 @@ SELECT sub1.id,sub1.document_id,sub1.alternative_text,sub1.width,sub1.height,sub
           },
         });
 
-      let friendUser = await strapi
+      let friend = await strapi
         .documents("plugin::users-permissions.user")
         .findOne({
-          documentId: friendUserDocumentId,
+          documentId: friendDocumentId,
           fields: [],
           populate: {
             friends: {
@@ -816,24 +861,22 @@ SELECT sub1.id,sub1.document_id,sub1.alternative_text,sub1.width,sub1.height,sub
           },
         });
 
-      friendUser = await strapi
-        .documents("plugin::users-permissions.user")
-        .update({
-          documentId: friendUserDocumentId,
-          data: {
-            friends: _.filter(
-              friendUser.friends,
-              (item: any) => item.documentId !== currentUserDocumentId
-            ),
-          },
-        });
+      friend = await strapi.documents("plugin::users-permissions.user").update({
+        documentId: friendDocumentId,
+        data: {
+          friends: _.filter(
+            friend.friends,
+            (item: any) => item.documentId !== userDocumentId
+          ),
+        },
+      });
 
       const notification = await strapi
         .documents("api::notification.notification")
         .create({
           data: {
             type: "friend-cancel" as any,
-            user: friendUser.id,
+            user: friend.id,
             data: JSON.stringify({
               user: {
                 id: currentUser.id,
@@ -848,14 +891,16 @@ SELECT sub1.id,sub1.document_id,sub1.alternative_text,sub1.width,sub1.height,sub
           },
         });
 
-      (strapi as any).io.to(friendUser.id).emit("friend:cancel", {
+      (strapi as any).io.to(friend.id).emit("friend:cancel", {
         data: {
-          id: friendUser.id,
-          documentId: friendUser.documentId,
+          friend: {
+            id: currentUser.id,
+            documentId: currentUser.documentId,
+          },
         },
       });
 
-      (strapi as any).io.to(friendUser.id).emit("notification:create", {
+      (strapi as any).io.to(friend.id).emit("notification:create", {
         data: notification,
       });
 

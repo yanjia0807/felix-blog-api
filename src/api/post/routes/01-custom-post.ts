@@ -16,6 +16,21 @@ export default {
       handler: "api::post.post.findUserDraftPosts",
     },
     {
+      method: "GET",
+      path: "/posts/trending",
+      handler: "api::post.post.findTrendingPosts",
+    },
+    {
+      method: "GET",
+      path: "/posts/following",
+      handler: "api::post.post.findFollowingPosts",
+    },
+    {
+      method: "GET",
+      path: "/posts/discover",
+      handler: "api::post.post.findDiscoverPosts",
+    },
+    {
       method: "PUT",
       path: "/posts/:id/unpublish",
       handler: "api::post.post.unpublish",
