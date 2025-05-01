@@ -140,6 +140,10 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "plugin::users-permissions.user"
+    },
+    "isOnline": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

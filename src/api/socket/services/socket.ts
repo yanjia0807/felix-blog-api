@@ -27,23 +27,30 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         const socketId = socket.id;
         const userId = socket.userId;
         strapi.log.info(`client [${socketId}, ${userId}] connected`);
+        
         socket.join(socket.userId);
         socket.emit("session", {
           userId,
         });
 
-        const onlineUser = await strapi
-          .service("api::online-user.online-user")
-          .createOnlineUser(userId);
+        strapi.db.query("plugin::users-permissions.user").update({
+          where: { id: userId },
+          data: {
+            isOnline: true,
+          },
+        });
 
         socket.on("disconnect", async () => {
           strapi.log.info(
             `client [${socket.id}, ${socket.userId}] disconnected`
           );
 
-          await strapi
-            .service("api::online-user.online-user")
-            .deleteOnlineUser(onlineUser);
+          strapi.db.query("plugin::users-permissions.user").update({
+            where: { id: userId },
+            data: {
+              isOnline: false,
+            },
+          });
         });
       });
     });

@@ -713,38 +713,6 @@ export interface ApiNotificationNotification
   };
 }
 
-export interface ApiOnlineUserOnlineUser extends Struct.CollectionTypeSchema {
-  collectionName: 'online_users';
-  info: {
-    description: '';
-    displayName: 'OnlineUser';
-    pluralName: 'online-users';
-    singularName: 'online-user';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::online-user.online-user'
-    > &
-      Schema.Attribute.Private;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<
-      'oneToOne',
-      'plugin::users-permissions.user'
-    >;
-  };
-}
-
 export interface ApiOtpOtp extends Struct.CollectionTypeSchema {
   collectionName: 'otps';
   info: {
@@ -785,7 +753,7 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
     singularName: 'post';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     attachmentExtras: Schema.Attribute.Component<
@@ -802,11 +770,13 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
     >;
     comments: Schema.Attribute.Relation<'oneToMany', 'api::comment.comment'>;
     content: Schema.Attribute.Text;
-    cover: Schema.Attribute.Media<'images' | 'videos'>;
+    cover: Schema.Attribute.Media<'images' | 'videos'> &
+      Schema.Attribute.Required;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     feature: Schema.Attribute.Relation<'oneToOne', 'api::feature.feature'>;
+    isPublished: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     likedByUsers: Schema.Attribute.Relation<
       'manyToMany',
       'plugin::users-permissions.user'
@@ -815,6 +785,7 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::post.post'> &
       Schema.Attribute.Private;
     poi: Schema.Attribute.Component<'shared.poi', false>;
+    publishDate: Schema.Attribute.DateTime;
     publishedAt: Schema.Attribute.DateTime;
     tags: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
     title: Schema.Attribute.String;
@@ -1341,6 +1312,7 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     >;
     gender: Schema.Attribute.Enumeration<['male', 'female']>;
+    isOnline: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     likePosts: Schema.Attribute.Relation<'manyToMany', 'api::post.post'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -1397,7 +1369,6 @@ declare module '@strapi/strapi' {
       'api::message-status.message-status': ApiMessageStatusMessageStatus;
       'api::message.message': ApiMessageMessage;
       'api::notification.notification': ApiNotificationNotification;
-      'api::online-user.online-user': ApiOnlineUserOnlineUser;
       'api::otp.otp': ApiOtpOtp;
       'api::post.post': ApiPostPost;
       'api::tag.tag': ApiTagTag;

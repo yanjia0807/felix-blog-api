@@ -116,16 +116,6 @@ module.exports = (plugin: any) => {
 
   plugin.routes["content-api"].routes.unshift({
     method: "GET",
-    path: "/users/custom/is-following",
-    handler: "custom.findIsFollowing",
-    config: {
-      middlewares: ["plugin::users-permissions.rateLimit"],
-      prefix: "",
-    },
-  });
-
-  plugin.routes["content-api"].routes.unshift({
-    method: "GET",
     path: "/users/custom/followings",
     handler: "custom.findFollowings",
     config: {
@@ -158,16 +148,6 @@ module.exports = (plugin: any) => {
     method: "GET",
     path: "/users/custom/friends",
     handler: "custom.findFriends",
-    config: {
-      middlewares: ["plugin::users-permissions.rateLimit"],
-      prefix: "",
-    },
-  });
-
-  plugin.routes["content-api"].routes.unshift({
-    method: "GET",
-    path: "/users/custom/is-friend",
-    handler: "custom.findIsFriend",
     config: {
       middlewares: ["plugin::users-permissions.rateLimit"],
       prefix: "",
@@ -411,28 +391,6 @@ module.exports = (plugin: any) => {
       });
 
       return result;
-    },
-
-    findIsFollowing: async (ctx: any) => {
-      const query = ctx.query;
-
-      const user: any = await strapi
-        .documents("plugin::users-permissions.user")
-        .findOne({
-          documentId: ctx.state.user.documentId,
-          fields: [],
-          populate: {
-            followings: {
-              fields: [],
-            },
-          },
-        });
-
-      const result = _.some(user.followings, {
-        documentId: query.following,
-      });
-
-      return { data: result };
     },
 
     updateFollowings: async (ctx: any) => {
@@ -791,26 +749,6 @@ module.exports = (plugin: any) => {
           },
         },
       };
-    },
-
-    findIsFriend: async (ctx: any) => {
-      const user: any = await strapi
-        .documents("plugin::users-permissions.user")
-        .findOne({
-          documentId: ctx.state.user.documentId,
-          fields: [],
-          populate: {
-            friends: {
-              fields: [],
-            },
-          },
-        });
-
-      const result = _.some(user.friends, {
-        documentId: ctx.query.userDocumentId,
-      });
-
-      return { data: result };
     },
 
     cancelFriend: async (ctx: any) => {

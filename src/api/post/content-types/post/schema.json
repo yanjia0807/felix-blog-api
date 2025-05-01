@@ -8,7 +8,7 @@
     "description": ""
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -21,7 +21,7 @@
     "cover": {
       "type": "media",
       "multiple": false,
-      "required": false,
+      "required": true,
       "allowedTypes": [
         "images",
         "videos"
@@ -77,6 +77,13 @@
       "type": "component",
       "repeatable": true,
       "component": "shared.attachment-extra"
+    },
+    "publishDate": {
+      "type": "datetime"
+    },
+    "isPublished": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
