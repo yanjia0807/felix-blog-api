@@ -527,6 +527,7 @@ export interface ApiExpoPushTokenExpoPushToken
   extends Struct.CollectionTypeSchema {
   collectionName: 'expo_push_tokens';
   info: {
+    description: '';
     displayName: 'ExpoPushToken';
     pluralName: 'expo-push-tokens';
     singularName: 'expo-push-token';
@@ -539,6 +540,7 @@ export interface ApiExpoPushTokenExpoPushToken
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     deviceId: Schema.Attribute.String;
+    enabled: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',

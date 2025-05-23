@@ -25,6 +25,9 @@ export default {
     const socketManager = createSocketManager(strapi);
     socketManager.initialize();
     (strapi as any).socketManager = socketManager;
-    (strapi as any).expo = createExpoManager(strapi);
+
+    const expoManager = createExpoManager(strapi);
+    expoManager.initialize();
+    (strapi as any).expo = expoManager;
   },
 };

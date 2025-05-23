@@ -7,21 +7,27 @@ const TICKET_PREFIX = "expo:tickets:";
 interface ExpoManager {
   initialize: () => void;
   sendToUser: (userId: string, pushMessage: any) => Promise<void>;
-  destroy: () => void;
 }
 
 export const createExpoManager = (strapi: Core.Strapi): ExpoManager => {
   const expo = new Expo();
   const redis = createRedisClient(strapi);
   const config: any = strapi.config.get("expo");
-  let checkInterval: NodeJS.Timeout | null = null;
+  const cronTaskId = "expo-receipts-check";
 
   const initialize = () => {
-    checkInterval = setInterval(() => checkReceipts(), config.checkInterval);
-  };
+    const cronRule: string = config.checkRule || "*/1 * * * *";
 
-  const destroy = () => {
-    if (checkInterval) clearInterval(checkInterval);
+    strapi.cron.add({
+      [cronTaskId]: {
+        task: async ({ strapi }) => {
+          await checkReceipts();
+        },
+        options: {
+          rule: cronRule,
+        },
+      },
+    });
   };
 
   const sendToUser = async (userId: string, pushMessage: any) => {
@@ -37,8 +43,8 @@ export const createExpoManager = (strapi: Core.Strapi): ExpoManager => {
     }
 
     const messages = expoPushTokens
-      .filter(({ token }) => Expo.isExpoPushToken(token))
-      .map(({ token }) => ({ to: token, ...pushMessage }));
+      .filter((item) => Expo.isExpoPushToken(item.token) && item.enabled)
+      .map((item) => ({ to: item.token, ...pushMessage }));
 
     return sendBatch(messages);
   };
@@ -60,7 +66,7 @@ export const createExpoManager = (strapi: Core.Strapi): ExpoManager => {
   const storeTickets = async (tickets: any[], ttl: number) => {
     await Promise.all(
       tickets
-        .filter((t) => t.status === "ok" && t.id)
+        .filter((ticket) => ticket.status === "ok")
         .map(async (ticket) => {
           await redis.set(
             `${TICKET_PREFIX}${ticket.id}`,
@@ -90,7 +96,7 @@ export const createExpoManager = (strapi: Core.Strapi): ExpoManager => {
   const handleReceipts = async (receipts: Record<string, any>) => {
     for (const [receiptId, receipt] of Object.entries(receipts)) {
       const ticketKey = `${TICKET_PREFIX}${receiptId}`;
-      
+
       try {
         if (receipt.status === "ok") {
           await redis.del(ticketKey);
@@ -117,8 +123,11 @@ export const createExpoManager = (strapi: Core.Strapi): ExpoManager => {
       .findFirst({ filters: { token } });
 
     if (record) {
-      await strapi.documents("api::expo-push-token.expo-push-token").delete({
+      await strapi.documents("api::expo-push-token.expo-push-token").update({
         documentId: record.documentId,
+        data: {
+          enabled: false
+        }
       });
     }
   };
@@ -126,6 +135,5 @@ export const createExpoManager = (strapi: Core.Strapi): ExpoManager => {
   return {
     initialize,
     sendToUser,
-    destroy,
   };
 };

@@ -4,7 +4,8 @@
   "info": {
     "singularName": "expo-push-token",
     "pluralName": "expo-push-tokens",
-    "displayName": "ExpoPushToken"
+    "displayName": "ExpoPushToken",
+    "description": ""
   },
   "options": {
     "draftAndPublish": false
@@ -21,6 +22,10 @@
       "relation": "manyToOne",
       "target": "plugin::users-permissions.user",
       "inversedBy": "expoPushTokens"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
     }
   }
 }
