@@ -88,8 +88,9 @@ export default factories.createCoreService("api::notification.notification", {
           ),
         },
       });
-
-      (strapi as any).io.to(friendRequest.sender.id).emit("friend:add", {
+      
+      const io = (strapi as any).socketManager.getIO();
+      io.to(friendRequest.sender.id).emit("addFriend", {
         data: {
           friend: {
             id: friendRequest.receiver.id,
@@ -126,7 +127,8 @@ export default factories.createCoreService("api::notification.notification", {
       },
     });
 
-    (strapi as any).io.to(friendRequest.sender.id).emit("notification:create", {
+    const io = (strapi as any).socketManager.getIO();
+    io.to(friendRequest.sender.id).emit("notification", {
       data: notification1,
     });
 

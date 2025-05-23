@@ -14,5 +14,13 @@ export default factories.createCoreController(
         .service("api::chat.chat")
         .init(ctx, sanitizedQueryParams);
     },
+
+    async queryUnreadCount(ctx) {
+      const params = {
+        userDocumentId: ctx.state.user.documentId,
+      };
+      
+      return await strapi.service("api::chat.chat").queryUnreadCount(params);
+    },
   })
 );

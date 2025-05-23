@@ -77,12 +77,11 @@ export default factories.createCoreService(
             }),
           },
         });
-
-      (strapi as any).io
-        .to(friendRequest.receiver.id)
-        .emit("notification:create", {
-          data: notification,
-        });
+        
+      const io = (strapi as any).socketManager.getIO();
+      io.to(friendRequest.receiver.id).emit("notification", {
+        data: notification,
+      });
 
       return friendRequest;
     },

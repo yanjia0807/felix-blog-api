@@ -1,8 +1,6 @@
-import { sanitize, validate } from "@strapi/utils";
 import { yup, validateYupSchema, errors } from "@strapi/utils";
 import { Pagination } from "@strapi/utils/dist/pagination";
 import _ from "lodash";
-import { transformItem } from "../../utils";
 
 const { ApplicationError, ValidationError, ForbiddenError, NotFoundError } =
   errors;
@@ -476,11 +474,12 @@ module.exports = (plugin: any) => {
           data: notificationParams,
         });
 
-      (strapi as any).io.to(followingUser.id).emit("notification:create", {
+      const io = (strapi as any).socketManager.getIO();
+      io.to(followingUser.id).emit("notification", {
         data: notification,
       });
 
-      (strapi as any).io.to(followingUser.id).emit("following:update", {
+      io.to(followingUser.id).emit("updateFollowing", {
         data: {
           follower: {
             id: ctx.state.user.id,
@@ -829,7 +828,8 @@ module.exports = (plugin: any) => {
           },
         });
 
-      (strapi as any).io.to(friend.id).emit("friend:cancel", {
+      const io = (strapi as any).socketManager.getIO();
+      io.to(friend.id).emit("cancelFriend", {
         data: {
           friend: {
             id: currentUser.id,
@@ -838,7 +838,7 @@ module.exports = (plugin: any) => {
         },
       });
 
-      (strapi as any).io.to(friend.id).emit("notification:create", {
+      io.to(friend.id).emit("notification", {
         data: notification,
       });
 

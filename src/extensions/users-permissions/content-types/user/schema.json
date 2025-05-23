@@ -144,6 +144,12 @@
     "isOnline": {
       "type": "boolean",
       "default": false
+    },
+    "expoPushTokens": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::expo-push-token.expo-push-token",
+      "mappedBy": "user"
     }
   }
 }

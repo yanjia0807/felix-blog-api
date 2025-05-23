@@ -17,4 +17,25 @@ export default ({ env }) => ({
       },
     },
   },
+  redis: {
+    config: {
+      settings: {
+        debug: false,
+        enableRedlock: true,
+      },
+      connections: {
+        default: {
+          connection: {
+            host: env("REDIS_HOST", "localhost"),
+            port: env("REDIS_PORT", 6379),
+            username: env("REDIS_USERNAME", ""),
+            password: env("REDIS_PASSWORD", ""),
+          },
+          settings: {
+            debug: false,
+          },
+        },
+      },
+    },
+  },
 });

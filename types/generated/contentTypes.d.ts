@@ -523,6 +523,40 @@ export interface ApiCommentComment extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiExpoPushTokenExpoPushToken
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'expo_push_tokens';
+  info: {
+    displayName: 'ExpoPushToken';
+    pluralName: 'expo-push-tokens';
+    singularName: 'expo-push-token';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    deviceId: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::expo-push-token.expo-push-token'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    token: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiFeatureFeature extends Struct.CollectionTypeSchema {
   collectionName: 'features';
   info: {
@@ -1299,6 +1333,10 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    expoPushTokens: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::expo-push-token.expo-push-token'
+    >;
     followers: Schema.Attribute.Relation<
       'manyToMany',
       'plugin::users-permissions.user'
@@ -1364,6 +1402,7 @@ declare module '@strapi/strapi' {
       'api::chat-status.chat-status': ApiChatStatusChatStatus;
       'api::chat.chat': ApiChatChat;
       'api::comment.comment': ApiCommentComment;
+      'api::expo-push-token.expo-push-token': ApiExpoPushTokenExpoPushToken;
       'api::feature.feature': ApiFeatureFeature;
       'api::friend-request.friend-request': ApiFriendRequestFriendRequest;
       'api::message-status.message-status': ApiMessageStatusMessageStatus;

@@ -1,8 +1,6 @@
 export default ({ env }) => ({
-  config: {
-    cors: {
-        origin: "*",
-        methods: "*",
-    }
+  cors: {
+    origin: "*",
+    methods: "*",
   },
 });
