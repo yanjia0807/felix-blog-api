@@ -2,91 +2,130 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import { Core } from "@strapi/strapi";
 import _ from "lodash";
 import { Server, Socket } from "socket.io";
-import { createRedisClient } from "../redis";
+import { redis, initialize as initializeRedis } from "../redis";
 
-interface SocketManager {
-  initialize: () => void;
-  getIO: () => Server;
-  isUserOnline: (userId: string) => Promise<boolean>;
-  updateUserStatus: (userId: string, status: boolean) => void;
-}
+export let io = null;
 
-export const createSocketManager = (strapi: Core.Strapi): SocketManager => {
-  let io: Server | null = null;
+export const initialize = (strapi: Core.Strapi) => {
+  const queryUser = async (userId: string) => {
+    const user = await strapi.db
+      .query("plugin::users-permissions.user")
+      .findOne({
+        where: { id: userId },
+      });
 
-  const initialize = () => {
-    const pubClient = createRedisClient(strapi);
+    return user;
+  };
+
+  const updateUserStatus = async (user: any, isOnline: boolean) => {
+    await strapi.documents("plugin::users-permissions.user").update({
+      documentId: user.documentId,
+      data: {
+        isOnline,
+      },
+    });
+  };
+
+  const noticeUserFollowers = async (user: any, isOnline: boolean) => {
+    const result: any = await strapi
+      .documents("plugin::users-permissions.user")
+      .findOne({
+        documentId: user.documentId,
+        populate: {
+          followers: {
+            fields: [],
+          },
+        },
+      });
+
+    const followers = result.followers;
+
+    followers.forEach((follower) => {
+      io.to(follower.documentId).emit("userStatus", {
+        data: {
+          userId: user.documentId,
+          isOnline,
+        },
+      });
+    });
+  };
+
+  if (!io) {
+    const config: any = strapi.config.get("socket");
+    if (!redis) {
+      initializeRedis(strapi);
+    }
+    const pubClient = redis;
     const subClient = pubClient.duplicate();
 
     io = new Server(strapi.server.httpServer, {
       adapter: createAdapter(pubClient, subClient),
-      ...strapi.config.get("socket"),
+      ...config,
     });
 
-    setupMiddleware();
-    setupEventHandlers();
-  };
-
-  const getIO = () => {
-    if (!io) initialize();
-    return io!;
-  };
-
-  const setupMiddleware = () => {
-    io?.use(async (socket: Socket, next) => {
+    io.use(async (socket: Socket, next) => {
       const token = socket.handshake.auth.token;
 
       try {
-        const jwtService = strapi.service("plugin::users-permissions.jwt");
-        const payload = await jwtService.verify(token);
-        (socket as any).userId = payload.id;
+        if (token) {
+          const jwtService = strapi.service("plugin::users-permissions.jwt");
+          const payload = await jwtService.verify(token);
+          const userId = payload.id;
+          const user = await queryUser(userId);
+
+          if (user) {
+            const { id, documentId, username, email } = user;
+            (socket as any).user = {
+              id,
+              documentId,
+              username,
+              email,
+            };
+          }
+        }
         next();
       } catch (error) {
         strapi.log.error(`Socket auth failed: ${error.message}`);
-        next(new Error("Authentication failed"));
+        next();
       }
     });
-  };
 
-  const setupEventHandlers = () => {
-    io?.on("connection", (socket: Socket) => {
-      const userId = (socket as any).userId;
-      strapi.log.info(`client connected: ${socket.id} (user: ${userId})`);
-      socket.join(userId);
+    io.on("connection", (socket: Socket) => {
+      strapi.log.info(
+        `client disconnected: ${socket.id}, userId: ${(socket as any).userId}`
+      );
 
-      updateUserStatus(userId, true);
+      if ((socket as any).user) {
+        socket.join((socket as any).user.documentId);
+        updateUserStatus((socket as any).user, true);
+        noticeUserFollowers((socket as any).user, true);
+      }
 
       socket.on("disconnect", () => {
-        strapi.log.info(`client disconnected: ${socket.id}`);
-        updateUserStatus(userId, false);
+        strapi.log.info(
+          `client disconnected: ${socket.id}, userId: ${(socket as any).userId}`
+        );
+
+        if ((socket as any).user) {
+          updateUserStatus((socket as any).user, false);
+          noticeUserFollowers((socket as any).user, false);
+        }
       });
     });
-  };
+  }
+};
 
-  const isUserOnline = async (userId: string) => {
-    const sockets = await getIO().sockets.adapter.sockets(
-      new Set([userId])
-    );
+export const getIoUtils = (strapi: Core.Strapi) => {
+  if (!io) {
+    throw new Error("socket is not initialized");
+  }
+
+  const isUserOnline = async (documentId: string) => {
+    const sockets = await io.sockets.adapter.sockets(new Set([documentId]));
     return sockets.size > 0;
   };
 
-  const updateUserStatus = (userId: string, isOnline: boolean) => {
-    try {
-      strapi.db.query("plugin::users-permissions.user").update({
-        where: { id: userId },
-        data: {
-          isOnline,
-        },
-      });
-    } catch (error) {
-      strapi.log.error(`Update user status failed: ${error.message}`);
-    }
-  };
-
   return {
-    initialize,
-    getIO,
     isUserOnline,
-    updateUserStatus,
   };
 };

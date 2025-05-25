@@ -5,6 +5,7 @@
 import { factories } from "@strapi/strapi";
 import _ from "lodash";
 import { errors } from "@strapi/utils";
+import { io } from "../../../services/socket";
 
 export default factories.createCoreService(
   "api::friend-request.friend-request",
@@ -77,9 +78,8 @@ export default factories.createCoreService(
             }),
           },
         });
-        
-      const io = (strapi as any).socketManager.getIO();
-      io.to(friendRequest.receiver.id).emit("notification", {
+
+      io.to(friendRequest.receiver.documentId).emit("notification", {
         data: notification,
       });
 

@@ -1,12 +1,13 @@
 import type { Core } from "@strapi/strapi";
+import { io, getIoUtils } from "../../../../services/socket";
+import { getExpoUtils } from "../../../../services/expo";
 
 export default {
   async afterCreate(event: any) {
     const strapi = global.strapi as Core.Strapi;
-    const socketManager = (strapi as any).socketManager
-    const io = socketManager.getIO();
-    const expoManager = (strapi as any).expo;
-    
+    const expoUtils = getExpoUtils(strapi);
+    const ioUtils = getIoUtils(strapi);
+
     const { result } = event;
     const chatDocumentId = result.chat.documentId;
     const receiverDocumentId = result.receiver.documentId;
@@ -37,12 +38,12 @@ export default {
         data: { unreadCount: chatStatus.unreadCount + 1 },
       });
 
-      if (socketManager.isUserOnline(result.receiver.id)) {
-        io.to(result.receiver.id).emit("message", {
-          data: result,
-        });
-      } else {
-        await expoManager.sendToUser(result.receiver.id, {
+      // if (await ioUtils.isUserOnline(result.receiver.documentId)) {
+      //   io.to(result.receiver.documentId).emit("message", {
+      //     data: result,
+      //   });
+      // } else {
+        await expoUtils.sendToUser(result.receiver.documentId, {
           title: result.sender.username,
           body: result.content,
           data: {
@@ -50,8 +51,8 @@ export default {
             chatId: chatDocumentId,
             messageId: result.documentId,
           },
-        })
-      }
+        });
+      // }
 
       return result;
     } catch (error) {

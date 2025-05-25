@@ -1,7 +1,7 @@
 import type { Core } from "@strapi/strapi";
-import { createRedisClient } from "./services/redis";
-import { createSocketManager } from "./services/socket";
-import { createExpoManager } from "./services/expo";
+import { initialize as initializeRedis } from "./services/redis";
+import { initialize as initializeIO } from "./services/socket";
+import { initialize as initializeExpo } from "./services/expo";
 
 export default {
   /**
@@ -20,14 +20,8 @@ export default {
    * run jobs, or perform some special logic.
    */
   bootstrap({ strapi }: { strapi: Core.Strapi }) {
-    (strapi as any).redis = createRedisClient(strapi);
-
-    const socketManager = createSocketManager(strapi);
-    socketManager.initialize();
-    (strapi as any).socketManager = socketManager;
-
-    const expoManager = createExpoManager(strapi);
-    expoManager.initialize();
-    (strapi as any).expo = expoManager;
+    initializeRedis(strapi);
+    initializeIO(strapi);
+    initializeExpo(strapi);
   },
 };

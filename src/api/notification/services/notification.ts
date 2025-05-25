@@ -4,6 +4,7 @@
 
 import { factories } from "@strapi/strapi";
 import _ from "lodash";
+import { io } from "../../../services/socket";
 
 export default factories.createCoreService("api::notification.notification", {
   async count(params) {
@@ -24,7 +25,7 @@ export default factories.createCoreService("api::notification.notification", {
   },
 
   async updateFriendRequestNotification(documentId, params) {
-    const {data} = params;
+    const { data } = params;
 
     const notification = await super.update(documentId, {
       data: {
@@ -88,14 +89,13 @@ export default factories.createCoreService("api::notification.notification", {
           ),
         },
       });
-      
-      const io = (strapi as any).socketManager.getIO();
-      io.to(friendRequest.sender.id).emit("addFriend", {
+
+      io.to(friendRequest.sender.documentId).emit("addFriend", {
         data: {
           friend: {
             id: friendRequest.receiver.id,
             documentId: friendRequest.receiver.documentId,
-          }
+          },
         },
       });
     }
@@ -127,8 +127,7 @@ export default factories.createCoreService("api::notification.notification", {
       },
     });
 
-    const io = (strapi as any).socketManager.getIO();
-    io.to(friendRequest.sender.id).emit("notification", {
+    io.to(friendRequest.sender.documentId).emit("notification", {
       data: notification1,
     });
 

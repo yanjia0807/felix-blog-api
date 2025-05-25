@@ -1,33 +1,30 @@
 import { Core } from "@strapi/strapi";
 import Redis from "ioredis";
 
-let client: Redis | null = null;
+export let redis: Redis | null = null;
 
-export const createRedisClient = (strapi: Core.Strapi) => {
-  if (!client) {
-    initialize(strapi);
+export const initialize = (strapi: Core.Strapi) => {
+  const config: any = strapi.config.get("redis");
+  const { host, port, username, password } = config;
+
+  if (!redis) {
+    redis = new Redis({
+      host,
+      port,
+      username,
+      password,
+    });
+
+    redis.on("connect", () => {
+      strapi.log.info(`redis connected to ${host}:${port}`);
+    });
+
+    redis.on("ready", () => {
+      strapi.log.info(`redis Ready on ${host}:${port}`);
+    });
+
+    redis.on("error", (err) => {
+      strapi.log.error(`redis error: ${err.message}`);
+    });
   }
-  return client;
-};
-
-const initialize = (strapi: Core.Strapi) => {
-  const { host, port, username, password } = strapi.config.get("redis") as any;
-  client = new Redis({
-    host,
-    port,
-    username,
-    password,
-  });
-
-  client.on("connect", () => {
-    strapi.log.info(`redis connected to ${host}:${port}`);
-  });
-
-  client.on("error", (err) => {
-    strapi.log.error(`redis error: ${err.message}`);
-  });
-
-  client.on("ready", () => {
-    strapi.log.info(`redis Ready on ${host}:${port}`);
-  });
 };
