@@ -13,7 +13,7 @@ export default factories.createCoreController(
           userId: ctx.state.user.id,
         },
       };
-      
+
       const result = await strapi
         .service("api::notification.notification")
         .count(params);
@@ -28,6 +28,20 @@ export default factories.createCoreController(
       const result = await strapi
         .service("api::notification.notification")
         .updateFriendRequestNotification(ctx.params.id, params);
+
+      return result;
+    },
+
+    async updateNotificationsAllRead(ctx) {
+      const params = {
+        data: {
+          userId: ctx.state.user.id,
+        },
+      };
+
+      const result = await strapi
+        .service("api::notification.notification")
+        .updateNotificationsAllRead(params);
 
       return result;
     },

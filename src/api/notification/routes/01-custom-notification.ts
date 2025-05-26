@@ -9,6 +9,11 @@ export default {
       method: "PUT",
       path: "/notifications/:id/friend-request",
       handler: "api::notification.notification.updateFriendRequestNotification",
+    },
+    {
+      method: "PUT",
+      path: "/notifications/all-read",
+      handler: "api::notification.notification.updateNotificationsAllRead",
     }
   ],
 };

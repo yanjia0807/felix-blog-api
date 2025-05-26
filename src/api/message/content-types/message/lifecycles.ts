@@ -1,12 +1,10 @@
 import type { Core } from "@strapi/strapi";
-import { io, getIoUtils } from "../../../../services/socket";
-import { getExpoUtils } from "../../../../services/expo";
+import { io, isUserOnline } from "../../../../services/socket";
+import { sendUserNotification } from "../../../../services/expo";
 
 export default {
   async afterCreate(event: any) {
     const strapi = global.strapi as Core.Strapi;
-    const expoUtils = getExpoUtils(strapi);
-    const ioUtils = getIoUtils(strapi);
 
     const { result } = event;
     const chatDocumentId = result.chat.documentId;
@@ -38,12 +36,12 @@ export default {
         data: { unreadCount: chatStatus.unreadCount + 1 },
       });
 
-      // if (await ioUtils.isUserOnline(result.receiver.documentId)) {
-      //   io.to(result.receiver.documentId).emit("message", {
-      //     data: result,
-      //   });
-      // } else {
-        await expoUtils.sendToUser(result.receiver.documentId, {
+      if (await isUserOnline(result.receiver.documentId)) {
+        io.to(result.receiver.documentId).emit("message", {
+          data: result,
+        });
+      } else {
+        await sendUserNotification(result.receiver.documentId, {
           title: result.sender.username,
           body: result.content,
           data: {
@@ -52,7 +50,7 @@ export default {
             messageId: result.documentId,
           },
         });
-      // }
+      }
 
       return result;
     } catch (error) {

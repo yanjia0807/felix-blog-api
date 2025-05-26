@@ -3,6 +3,7 @@ import Expo, { ExpoPushMessage } from "expo-server-sdk";
 import { redis } from "../redis";
 
 let expo: Expo | null = null;
+let _strapi: Core.Strapi | null = null;
 
 const TICKET_PRIFIX = "expo:tickets:";
 const CHECK_RECEIPT_TASK_ID = "expo-receipts-check";
@@ -66,6 +67,7 @@ export const initialize = (strapi: Core.Strapi) => {
   };
 
   if (!expo) {
+    _strapi = strapi;
     expo = new Expo();
 
     strapi.cron.add({
@@ -81,62 +83,56 @@ export const initialize = (strapi: Core.Strapi) => {
   }
 };
 
-export const getExpoUtils = (strapi: Core.Strapi) => {
+export const sendUserNotification = async (documentId: string, pushMessage: any) => {
   if (!expo) {
-    throw new Error("expo is not initialized")
+    throw new Error("expo is not initialized");
   }
 
-  const config: any = strapi.config.get("expo");
-  const ticketStaleTime = config.ticketStaleTime || 86400;
+  const expoPushTokens = await _strapi
+    .documents("api::expo-push-token.expo-push-token")
+    .findMany({
+      filters: { user: { documentId } },
+    });
 
-  const sendToUser = async (documentId: string, pushMessage: any) => {
-    const expoPushTokens = await strapi
-      .documents("api::expo-push-token.expo-push-token")
-      .findMany({
-        filters: { user: { documentId } },
-      });
+  if (expoPushTokens.length === 0) {
+    _strapi.log.info(`No Expo tokens for user ${documentId}`);
+    return;
+  }
 
-    if (expoPushTokens.length === 0) {
-      strapi.log.info(`No Expo tokens for user ${documentId}`);
-      return;
+  const messages = expoPushTokens
+    .filter((item) => Expo.isExpoPushToken(item.token) && item.enabled)
+    .map((item) => ({ to: item.token, ...pushMessage }));
+
+  return sendBatch(messages);
+};
+
+const sendBatch = async (messages: ExpoPushMessage[]) => {
+  const chunks = expo.chunkPushNotifications(messages);
+
+  for (const chunk of chunks) {
+    try {
+      const tickets = await expo.sendPushNotificationsAsync(chunk);
+      await storeTickets(tickets);
+    } catch (error) {
+      _strapi.log.error(`Push notification failed: ${error}`);
     }
+  }
+};
 
-    const messages = expoPushTokens
-      .filter((item) => Expo.isExpoPushToken(item.token) && item.enabled)
-      .map((item) => ({ to: item.token, ...pushMessage }));
+const storeTickets = async (tickets: any[]) => {
+  const config: any = _strapi.config.get("expo");
+  const ttl = config.ticketStaleTime || 86400;
 
-    return sendBatch(messages);
-  };
-
-  const sendBatch = async (messages: ExpoPushMessage[]) => {
-    const chunks = expo.chunkPushNotifications(messages);
-
-    for (const chunk of chunks) {
-      try {
-        const tickets = await expo.sendPushNotificationsAsync(chunk);
-        await storeTickets(tickets, ticketStaleTime);
-      } catch (error) {
-        strapi.log.error(`Push notification failed: ${error}`);
-      }
-    }
-  };
-
-  const storeTickets = async (tickets: any[], ttl: number) => {
-    await Promise.all(
-      tickets
-        .filter((ticket) => ticket.status === "ok")
-        .map(async (ticket) => {
-          await redis.set(
-            `${TICKET_PRIFIX}${ticket.id}`,
-            JSON.stringify({ ticket, timestamp: Date.now() }),
-            "EX",
-            ttl
-          );
-        })
-    );
-  };
-
-  return {
-    sendToUser,
-  };
+  await Promise.all(
+    tickets
+      .filter((ticket) => ticket.status === "ok")
+      .map(async (ticket) => {
+        await redis.set(
+          `${TICKET_PRIFIX}${ticket.id}`,
+          JSON.stringify({ ticket, timestamp: Date.now() }),
+          "EX",
+          ttl
+        );
+      })
+  );
 };

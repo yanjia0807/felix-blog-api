@@ -5,6 +5,7 @@ import { Server, Socket } from "socket.io";
 import { redis, initialize as initializeRedis } from "../redis";
 
 export let io = null;
+let _strapi: Core.Strapi | null = null;
 
 export const initialize = (strapi: Core.Strapi) => {
   const queryUser = async (userId: string) => {
@@ -51,6 +52,7 @@ export const initialize = (strapi: Core.Strapi) => {
   };
 
   if (!io) {
+    _strapi = strapi;
     const config: any = strapi.config.get("socket");
     if (!redis) {
       initializeRedis(strapi);
@@ -115,17 +117,10 @@ export const initialize = (strapi: Core.Strapi) => {
   }
 };
 
-export const getIoUtils = (strapi: Core.Strapi) => {
+export const isUserOnline = async (documentId: string) => {
   if (!io) {
     throw new Error("socket is not initialized");
   }
-
-  const isUserOnline = async (documentId: string) => {
-    const sockets = await io.sockets.adapter.sockets(new Set([documentId]));
-    return sockets.size > 0;
-  };
-
-  return {
-    isUserOnline,
-  };
+  const sockets = await io.sockets.adapter.sockets(new Set([documentId]));
+  return sockets.size > 0;
 };

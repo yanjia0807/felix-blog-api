@@ -135,4 +135,19 @@ export default factories.createCoreService("api::notification.notification", {
       data: notification,
     };
   },
+
+  async updateNotificationsAllRead(params) {
+    const {
+      data: { userId },
+    } = params;
+
+    const result = await strapi.db.connection.raw(
+      `UPDATE notifications t1 
+        SET t1.state='read' WHERE t1.id IN (
+        SELECT t1.notification_id FROM notifications_user_lnk t1 WHERE t1.user_id=?) AND t1.state='unread'`,
+      [userId]
+    );
+
+    return { data: true };
+  },
 });
