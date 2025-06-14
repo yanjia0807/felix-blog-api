@@ -36,6 +36,30 @@
       "relation": "oneToMany",
       "target": "api::message-status.message-status",
       "mappedBy": "message"
+    },
+    "messageType": {
+      "type": "enumeration",
+      "enum": [
+        "text",
+        "voice",
+        "imagery"
+      ],
+      "default": "text"
+    },
+    "attachments": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": true
+    },
+    "attachmentExtras": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.attachment-extra"
     }
   }
 }

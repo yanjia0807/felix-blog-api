@@ -673,6 +673,14 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    attachmentExtras: Schema.Attribute.Component<
+      'shared.attachment-extra',
+      true
+    >;
+    attachments: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
     chat: Schema.Attribute.Relation<'manyToOne', 'api::chat.chat'>;
     content: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
@@ -688,6 +696,8 @@ export interface ApiMessageMessage extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::message-status.message-status'
     >;
+    messageType: Schema.Attribute.Enumeration<['text', 'voice', 'imagery']> &
+      Schema.Attribute.DefaultTo<'text'>;
     publishedAt: Schema.Attribute.DateTime;
     receiver: Schema.Attribute.Relation<
       'oneToOne',
@@ -797,7 +807,7 @@ export interface ApiPostPost extends Struct.CollectionTypeSchema {
       true
     >;
     attachments: Schema.Attribute.Media<
-      'images' | 'files' | 'videos' | 'audios',
+      'images' | 'videos' | 'audios' | 'files',
       true
     >;
     author: Schema.Attribute.Relation<

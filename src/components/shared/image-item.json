@@ -1,20 +1,18 @@
 {
-  "collectionName": "components_shared_attachment_extras",
+  "collectionName": "components_shared_image_items",
   "info": {
-    "displayName": "AttachmentExtra",
+    "displayName": "ImageryItem",
     "description": ""
   },
   "options": {},
   "attributes": {
-    "attachment": {
+    "file": {
       "type": "media",
       "multiple": false,
       "required": false,
       "allowedTypes": [
         "images",
-        "files",
-        "videos",
-        "audios"
+        "videos"
       ]
     },
     "thumbnail": {
@@ -24,9 +22,6 @@
       "allowedTypes": [
         "images"
       ]
-    },
-    "secs": {
-      "type": "decimal"
     }
   }
 }
