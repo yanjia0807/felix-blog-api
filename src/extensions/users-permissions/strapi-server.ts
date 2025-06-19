@@ -163,6 +163,26 @@ module.exports = (plugin: any) => {
     },
   });
 
+  plugin.routes["content-api"].routes.unshift({
+    method: "PUT",
+    path: "/users/custom/add-block-user",
+    handler: "custom.addBlockUser",
+    config: {
+      middlewares: ["plugin::users-permissions.rateLimit"],
+      prefix: "",
+    },
+  });
+
+  plugin.routes["content-api"].routes.unshift({
+    method: "PUT",
+    path: "/users/custom/remove-block-user",
+    handler: "custom.removeBlockUser",
+    config: {
+      middlewares: ["plugin::users-permissions.rateLimit"],
+      prefix: "",
+    },
+  });
+
   plugin.controllers.custom = {
     registerOtp: async (ctx) => {
       const pluginStore = await strapi.store({
@@ -840,6 +860,71 @@ module.exports = (plugin: any) => {
       io.to(friend.documentId).emit("notification", {
         data: notification,
       });
+
+      return { data: currentUser };
+    },
+
+    addBlockUser: async (ctx: any) => {
+      const userDocumentId = ctx.state.user.documentId;
+      const blockUserDocumentId = ctx.request.body.data.user;
+
+      let currentUser: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: userDocumentId,
+          fields: [],
+          populate: {
+            blockUsers: {
+              fields: [],
+            },
+          },
+        });
+
+      currentUser = await strapi
+        .documents("plugin::users-permissions.user")
+        .update({
+          documentId: userDocumentId,
+          data: {
+            blockUsers: _.concat(
+              _.map(currentUser.blockUsers, (item: any) => item.documentId),
+              blockUserDocumentId
+            ),
+          },
+        });
+
+      return { data: currentUser };
+    },
+
+    removeBlockUser: async (ctx: any) => {
+      const userDocumentId = ctx.state.user.documentId;
+      const blockUserDocumentId = ctx.request.body.data.user;
+
+      let currentUser: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: userDocumentId,
+          fields: [],
+          populate: {
+            blockUsers: {
+              fields: [],
+            },
+          },
+        });
+
+      currentUser = await strapi
+        .documents("plugin::users-permissions.user")
+        .update({
+          documentId: userDocumentId,
+          data: {
+            blockUsers: _.map(
+              _.filter(
+                currentUser.blockUsers,
+                (item) => item.documentId !== blockUserDocumentId
+              ),
+              (item) => item.documentId
+            ),
+          },
+        });
 
       return { data: currentUser };
     },

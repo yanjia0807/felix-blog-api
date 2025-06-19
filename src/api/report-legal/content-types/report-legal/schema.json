@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "report_legals",
+  "info": {
+    "singularName": "report-legal",
+    "pluralName": "report-legals",
+    "displayName": "reportLegal",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "code": {
+      "type": "string"
+    },
+    "word": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+}

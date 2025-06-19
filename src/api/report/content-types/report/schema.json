@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "reports",
+  "info": {
+    "singularName": "report",
+    "pluralName": "reports",
+    "displayName": "report",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "reporter": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "contentRelation": {
+      "type": "enumeration",
+      "enum": [
+        "post",
+        "comment",
+        "user"
+      ]
+    },
+    "contentDocumentId": {
+      "type": "string"
+    },
+    "state": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "remark": {
+      "type": "text"
+    },
+    "legal": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::report-legal.report-legal"
+    }
+  }
+}

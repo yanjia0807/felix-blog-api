@@ -90,13 +90,32 @@ export default factories.createCoreService("api::post.post", {
   async findTrendingPosts(ctx: any) {
     const { pagination } = ctx.query;
 
+    let blockUsers = [];
+    if (ctx.state.user) {
+      const currentUser: any = await strapi
+        .documents("plugin::users-permissions.user")
+        .findOne({
+          documentId: ctx.state.user.documentId,
+          fields: [],
+          populate: {
+            blockUsers: {
+              fields: [],
+            },
+          },
+        });
+
+      blockUsers = _.map(currentUser.blockUsers, (item) => item.id);
+    }
+    blockUsers = blockUsers.length > 0 ? blockUsers : [0];
+
     const page = parseInt(pagination?.page || 1);
     const pageSize = parseInt(pagination?.pageSize || 25);
     const offset = (page - 1) * pageSize;
     const limit = pageSize;
 
     const totalResult = await strapi.db.connection.raw(
-      `SELECT COUNT(t1.id) AS 'total' FROM posts t1 WHERE t1.is_published=1`
+      `SELECT COUNT(t1.id) AS 'total' FROM posts t1 LEFT JOIN posts_author_lnk t2 ON t1.id=t2.post_id WHERE t1.is_published=1 AND t2.user_id NOT IN (?)`,
+      [blockUsers]
     );
 
     const total = parseInt(totalResult[0][0].total);
@@ -110,8 +129,8 @@ export default factories.createCoreService("api::post.post", {
         SELECT JSON_OBJECT('id',sub1.id,'document_id',sub1.document_id,'name',sub1.name,'alternative_text',sub1.alternative_text,'caption',sub1.caption,'mime',sub1.mime,'width',sub1.width,'height',sub1.height,'formats',sub1.formats) AS cover,sub2.related_id FROM files sub1 INNER JOIN files_related_mph sub2 ON sub1.id=sub2.file_id WHERE sub2.related_type='api::post.post' AND sub2.field='cover') t7 ON t1.id=t7.related_id LEFT JOIN (
         SELECT sub1.id,JSON_ARRAYAGG(JSON_OBJECT('id',sub2.id,'document_id',sub3.document_id)) AS likedByUsers FROM posts sub1 LEFT JOIN posts_liked_by_users_lnk sub2 ON sub1.id=sub2.post_id LEFT JOIN up_users sub3 ON sub2.user_id=sub3.id GROUP BY sub1.id) t8 ON t1.id=t8.id LEFT JOIN (
         SELECT sub4.entity_id,JSON_ARRAYAGG(JSON_OBJECT('id',sub1.related_id,'attachment',JSON_OBJECT('id',attachment.id,'documentId',attachment.document_id,'name',attachment.name,'alternativeText',attachment.alternative_text,'caption',attachment.caption,'width',attachment.width,'height',attachment.height,'formats',attachment.formats,'hash',attachment.HASH,'ext',attachment.ext,'mime',attachment.mime,'size',attachment.size,'url',attachment.url,'previewUrl',attachment.preview_url,'provider',attachment.provider,'provider_metadata',attachment.provider_metadata,'createdAt',attachment.created_at,'updatedAt',attachment.updated_at),'thumbnail',JSON_OBJECT('id',thumbnail.id,'documentId',thumbnail.document_id,'name',thumbnail.name,'alternativeText',thumbnail.alternative_text,'caption',thumbnail.caption,'width',thumbnail.width,'height',thumbnail.height,'formats',thumbnail.formats,'hash',thumbnail.HASH,'ext',thumbnail.ext,'mime',thumbnail.mime,'size',thumbnail.size,'url',thumbnail.url,'previewUrl',thumbnail.preview_url,'provider',thumbnail.provider,'provider_metadata',thumbnail.provider_metadata,'createdAt',thumbnail.created_at,'updatedAt',thumbnail.updated_at))) AS attachmentExtras FROM (
-        SELECT sub1.related_id,sub1.id AS attachment_related_id,sub1.file_id AS attachment_file_id,sub2.id AS thumbnail_related_id,sub2.file_id AS thumbnail_file_id FROM files_related_mph sub1 INNER JOIN files_related_mph sub2 ON sub1.related_id=sub2.related_id AND sub1.related_type='shared.attachment-extra' AND sub1.field='attachment' AND sub2.related_type='shared.attachment-extra' AND sub2.field='thumbnail') sub1 LEFT JOIN files attachment ON sub1.attachment_file_id=attachment.id LEFT JOIN files thumbnail ON sub1.thumbnail_file_id=thumbnail.id LEFT JOIN posts_cmps sub4 ON sub1.related_id=sub4.cmp_id GROUP BY sub4.entity_id) t9 ON t1.id=t9.entity_id WHERE t1.is_published IS NOT NULL AND t7.related_id IS NOT NULL ORDER BY t3.comments_total DESC,t2.likes_total DESC,t1.publish_date DESC LIMIT ? OFFSET ?`,
-      [limit, offset]
+        SELECT sub1.related_id,sub1.id AS attachment_related_id,sub1.file_id AS attachment_file_id,sub2.id AS thumbnail_related_id,sub2.file_id AS thumbnail_file_id FROM files_related_mph sub1 INNER JOIN files_related_mph sub2 ON sub1.related_id=sub2.related_id AND sub1.related_type='shared.attachment-extra' AND sub1.field='attachment' AND sub2.related_type='shared.attachment-extra' AND sub2.field='thumbnail') sub1 LEFT JOIN files attachment ON sub1.attachment_file_id=attachment.id LEFT JOIN files thumbnail ON sub1.thumbnail_file_id=thumbnail.id LEFT JOIN posts_cmps sub4 ON sub1.related_id=sub4.cmp_id GROUP BY sub4.entity_id) t9 ON t1.id=t9.entity_id WHERE t1.is_published IS NOT NULL AND t7.related_id IS NOT NULL AND t4.user_id NOT IN (?) ORDER BY t3.comments_total DESC,t2.likes_total DESC,t1.publish_date DESC LIMIT ? OFFSET ?`,
+      [blockUsers, limit, offset]
     );
 
     const dataJson =

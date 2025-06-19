@@ -150,6 +150,11 @@
       "relation": "oneToMany",
       "target": "api::expo-push-token.expo-push-token",
       "mappedBy": "user"
+    },
+    "blockUsers": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user"
     }
   }
 }
