@@ -2,6 +2,7 @@ import type { Core } from "@strapi/strapi";
 import { initialize as initializeRedis } from "./services/redis";
 import { initialize as initializeIO } from "./services/socket";
 import { initialize as initializeExpo } from "./services/expo";
+import { initialize as initializeAliyunGreen } from "./services/aliyun/green-client";
 
 export default {
   /**
@@ -23,5 +24,6 @@ export default {
     initializeRedis(strapi);
     initializeIO(strapi);
     initializeExpo(strapi);
+    initializeAliyunGreen(strapi)
   },
 };

@@ -5,6 +5,7 @@
 import { factories } from "@strapi/strapi";
 import _ from "lodash";
 import { transformItem } from "../../../utils";
+import { ugcModerationByllm } from "../../../services/aliyun/green-client";
 
 export default factories.createCoreService("api::post.post", {
   async find(params) {
@@ -46,6 +47,14 @@ export default factories.createCoreService("api::post.post", {
     );
 
     return { results: resultsWithLastComments, pagination };
+  },
+
+  async create(params) {
+    const { title, content }: any = params.data;
+    await ugcModerationByllm(`${title} ${content}`);
+
+    const result = await super.create(params);
+    return result;
   },
 
   async findPhotos(ctx: any) {
