@@ -94,6 +94,16 @@ module.exports = (plugin: any) => {
   });
 
   plugin.routes["content-api"].routes.unshift({
+    method: "DELETE",
+    path: "/users/custom/me",
+    handler: "custom.deleteMe",
+    config: {
+      middlewares: ["plugin::users-permissions.rateLimit"],
+      prefix: "",
+    },
+  });
+
+  plugin.routes["content-api"].routes.unshift({
     method: "GET",
     path: "/users/custom",
     handler: "custom.findUsers",
@@ -406,6 +416,21 @@ module.exports = (plugin: any) => {
       const result = await strapi.documents(contentType.uid).update({
         documentId: ctx.state.user.documentId,
         data,
+        ...query,
+      });
+
+      return result;
+    },
+
+    deleteMe: async (ctx: any) => {
+      const contentType = strapi.contentType("plugin::users-permissions.user");
+      const query = ctx.query;
+
+      const result = await strapi.documents(contentType.uid).update({
+        documentId: ctx.state.user.documentId,
+        data: {
+          blocked: true,
+        },
         ...query,
       });
 
