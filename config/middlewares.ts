@@ -8,10 +8,6 @@ export default [
   'strapi::body',
   'strapi::session',
   'strapi::favicon',
-  {
-    name: 'strapi::public',
-    config: {
-      dotfiles: 'allow' 
-    }
-  }
+  'strapi::public',
+  "global::wellKnown",
 ];

@@ -1,0 +1,16 @@
+{
+    "apps": [],
+    "details": [
+      {
+        "appID": "45QARSQ639.info.yanjia.felixblog",
+        "appIDs": ["45QARSQ639.info.yanjia.felixblog", "45QARSQ639.info.yanjia.felixblog.preview"],
+        "paths": ["/posts/*", "/users/*"]
+      }
+    ],
+    "activitycontinuation": {
+        "apps": ["45QARSQ639.info.yanjia.felixblog", "45QARSQ639.info.yanjia.felixblog.preview"]
+    },
+    "webcredentials": {
+        "apps": ["45QARSQ639.info.yanjia.felixblog", "45QARSQ639.info.yanjia.felixblog.preview"]
+    }
+}
