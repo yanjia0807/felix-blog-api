@@ -50,10 +50,19 @@ export default factories.createCoreService("api::post.post", {
   },
 
   async create(params) {
-    const { title, content }: any = params.data;
+    const { title, content, isPublished }: any = params.data;
     await ugcModerationByllm(`${title} ${content}`);
 
-    const result = await super.create(params);
+    const publishDate = isPublished ? new Date() : undefined;
+    const data = {
+      ...params,
+      data: {
+        ...params.data,
+        publishDate
+      }
+    }
+
+    const result = await super.create(data);
     return result;
   },
 
